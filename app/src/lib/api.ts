@@ -9,6 +9,15 @@ import type {
   TagCreateInput,
   Contact,
   ContactCreateInput,
+  User,
+  RegisterInput,
+  LoginInput,
+  UserCreateInput,
+  UserUpdateInput,
+  Role,
+  RoleCreateInput,
+  RoleUpdateInput,
+  Permission,
 } from "@/types/api";
 
 const API_BASE = "/api";
@@ -43,8 +52,32 @@ export const api = {
   ping: () => apiFetch<{ ok: boolean; ts: number }>("/ping"),
 
   auth: {
-    me: () => apiFetch<{ id: number; unionId: string; name: string | null; email: string | null; avatar: string | null; role: string; createdAt: string; updatedAt: string; lastSignInAt: string }>("/auth/me"),
+    me: () => apiFetch<User>("/auth/me"),
+    login: (data: LoginInput) =>
+      apiFetch<{ success: true }>("/auth/login", { method: "POST", body: JSON.stringify(data) }),
+    register: (data: RegisterInput) =>
+      apiFetch<User>("/auth/register", { method: "POST", body: JSON.stringify(data) }),
     logout: () => apiFetch<{ success: true }>("/auth/logout", { method: "POST" }),
+  },
+
+  users: {
+    list: () => apiFetch<User[]>("/users"),
+    get: (id: number) => apiFetch<User>(`/users/${id}`),
+    create: (data: UserCreateInput) =>
+      apiFetch<User>("/users", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: number, data: UserUpdateInput) =>
+      apiFetch<User>(`/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: number) => apiFetch<{ success: true }>(`/users/${id}`, { method: "DELETE" }),
+  },
+
+  roles: {
+    list: () => apiFetch<Role[]>("/roles"),
+    permissions: () => apiFetch<Permission[]>("/roles/permissions"),
+    create: (data: RoleCreateInput) =>
+      apiFetch<Role>("/roles", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: number, data: RoleUpdateInput) =>
+      apiFetch<Role>(`/roles/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: number) => apiFetch<{ success: true }>(`/roles/${id}`, { method: "DELETE" }),
   },
 
   posts: {

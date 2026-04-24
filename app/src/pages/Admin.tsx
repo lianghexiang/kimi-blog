@@ -16,17 +16,19 @@ import {
   Edit3,
   Users,
   AlertCircle,
+  Shield,
 } from "lucide-react";
 
-type Tab = "posts" | "images" | "tags" | "contacts";
+type Tab = "posts" | "images" | "tags" | "contacts" | "users" | "roles";
 
 export default function Admin() {
   const { user, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("posts");
   const [postType, setPostType] = useState<"blog" | "journal" | "thought" | "all">("all");
 
+  const isAdmin = user?.roles?.some((r) => r.name === "admin");
   // Redirect non-admin users
-  if (!authLoading && (!user || user.role !== "admin")) {
+  if (!authLoading && (!user || !isAdmin)) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
         <div className="text-center bg-white rounded-2xl p-8 neo-border neo-shadow max-w-md mx-4">
@@ -75,6 +77,8 @@ export default function Admin() {
               { id: "images" as Tab, label: "图片管理", icon: <ImageIcon className="w-4 h-4" /> },
               { id: "tags" as Tab, label: "标签管理", icon: <Tag className="w-4 h-4" /> },
               { id: "contacts" as Tab, label: "留言管理", icon: <Mail className="w-4 h-4" /> },
+              { id: "users" as Tab, label: "用户管理", icon: <Users className="w-4 h-4" /> },
+              { id: "roles" as Tab, label: "角色权限", icon: <Shield className="w-4 h-4" /> },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -98,6 +102,8 @@ export default function Admin() {
           {activeTab === "images" && <ImagesTab />}
           {activeTab === "tags" && <TagsTab />}
           {activeTab === "contacts" && <ContactsTab />}
+          {activeTab === "users" && <UsersTab />}
+          {activeTab === "roles" && <RolesTab />}
         </div>
       </main>
     </div>
@@ -620,6 +626,214 @@ function ContactsTab() {
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+/* ─── Users Tab ─── */
+function UsersTab() {
+  const queryClient = useQueryClient();
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["users", "list"],
+    queryFn: () => api.users.list(),
+  });
+  const createUser = useMutation({
+    mutationFn: api.users.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+    },
+  });
+  const deleteUser = useMutation({
+    mutationFn: api.users.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users", "list"] });
+    },
+  });
+
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    name: "",
+    email: "",
+  });
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8 text-gray-400">加载中...</div>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setShowForm(!showForm)}
+        className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black text-sm font-medium rounded-xl neo-border hover:bg-yellow-500 transition-colors mb-6"
+      >
+        <Plus className="w-4 h-4" />
+        {showForm ? "取消" : "新建用户"}
+      </button>
+
+      {showForm && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            createUser.mutate(
+              { ...form, isActive: true },
+              {
+                onSuccess: () => {
+                  setForm({ username: "", password: "", name: "", email: "" });
+                  setShowForm(false);
+                },
+              }
+            );
+          }}
+          className="bg-white rounded-2xl p-6 neo-border neo-shadow-sm mb-8 space-y-4"
+        >
+          <h3 className="text-lg font-bold">新建用户</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="用户名"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              required
+              className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+            />
+            <input
+              type="password"
+              placeholder="密码"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+              className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="昵称"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+            />
+            <input
+              type="email"
+              placeholder="邮箱"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={createUser.isPending}
+              className="px-6 py-2 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-50"
+            >
+              {createUser.isPending ? "创建中..." : "创建"}
+            </button>
+          </div>
+        </form>
+      )}
+
+      <div className="bg-white rounded-2xl neo-border overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-200">
+              {["用户名", "昵称", "邮箱", "状态", "操作"].map((h) => (
+                <th
+                  key={h}
+                  className="text-left px-4 py-3 text-sm font-semibold text-gray-700"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {users?.map((u) => (
+              <tr
+                key={u.id}
+                className="border-b border-gray-100 hover:bg-gray-50"
+              >
+                <td className="px-4 py-3 text-sm font-medium">{u.username}</td>
+                <td className="px-4 py-3 text-sm text-gray-600">
+                  {u.name || "-"}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600">
+                  {u.email || "-"}
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  {u.isActive ? (
+                    <span className="text-green-600">正常</span>
+                  ) : (
+                    <span className="text-red-500">禁用</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  <button
+                    onClick={() => {
+                      if (confirm("确定删除该用户？")) {
+                        deleteUser.mutate(u.id);
+                      }
+                    }}
+                    className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {users?.length === 0 && (
+          <p className="text-center text-gray-400 py-8">暂无用户</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Roles Tab ─── */
+function RolesTab() {
+  const { data: roles, isLoading } = useQuery({
+    queryKey: ["roles", "list"],
+    queryFn: () => api.roles.list(),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8 text-gray-400">加载中...</div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {roles?.map((role) => (
+        <div key={role.id} className="bg-white rounded-xl p-4 neo-border">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-bold text-gray-900">{role.name}</h4>
+            <span className="text-xs text-gray-400">
+              {role.description || ""}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {role.permissions.map((p) => (
+              <span
+                key={p.id}
+                className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-lg"
+              >
+                {p.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+      {roles?.length === 0 && (
+        <p className="text-center text-gray-400 py-8">暂无角色</p>
+      )}
     </div>
   );
 }

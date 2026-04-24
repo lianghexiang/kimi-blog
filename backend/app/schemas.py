@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from datetime import datetime
-from app.models import PostType, PostStatus, UserRole
+from app.models import PostType, PostStatus
 
 
 def to_camel(string: str) -> str:
@@ -13,17 +13,77 @@ class CamelModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
+# ─── Permission ───
+class PermissionResponse(CamelModel):
+    id: int
+    name: str
+    resource: str
+    action: str
+    description: Optional[str] = None
+
+
+# ─── Role ───
+class RoleResponse(CamelModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    permissions: List[PermissionResponse] = []
+
+
+class RoleCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    permission_ids: Optional[List[int]] = None
+
+
+class RoleUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    permission_ids: Optional[List[int]] = None
+
+
 # ─── User ───
 class UserResponse(CamelModel):
     id: int
-    union_id: str
+    username: str
     name: Optional[str] = None
     email: Optional[str] = None
     avatar: Optional[str] = None
-    role: UserRole
+    is_active: bool = True
+    roles: List[RoleResponse] = []
     created_at: datetime
     updated_at: datetime
     last_sign_in_at: datetime
+
+
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+    name: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    email: Optional[str] = None
+    name: Optional[str] = None
+    is_active: bool = True
+    role_ids: Optional[List[int]] = None
+
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    name: Optional[str] = None
+    avatar: Optional[str] = None
+    is_active: Optional[bool] = None
+    role_ids: Optional[List[int]] = None
 
 
 # ─── Tag ───
@@ -117,11 +177,6 @@ class ContactCreate(BaseModel):
 
 
 # ─── Auth ───
-class SessionPayload(BaseModel):
-    union_id: str
-    client_id: str
-
-
 class LogoutResponse(BaseModel):
     success: bool
 

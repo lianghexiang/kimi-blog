@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, and_, delete
 from typing import Optional
 from app.database import get_db
-from app.dependencies import require_admin
+from app.dependencies import require_permission
 from app.models import Post, Tag, post_tags
 from app.schemas import PostResponse, PostListParams, PostCreate, PostUpdate
 
@@ -62,7 +62,7 @@ async def get_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
-async def create_post(data: PostCreate, db: AsyncSession = Depends(get_db), user=Depends(require_admin)):
+async def create_post(data: PostCreate, db: AsyncSession = Depends(get_db), user=Depends(require_permission("posts:create"))):
     post = Post(
         title=data.title,
         content=data.content,
@@ -87,7 +87,7 @@ async def create_post(data: PostCreate, db: AsyncSession = Depends(get_db), user
 
 
 @router.put("/{id}", response_model=PostResponse)
-async def update_post(id: int, data: PostUpdate, db: AsyncSession = Depends(get_db), user=Depends(require_admin)):
+async def update_post(id: int, data: PostUpdate, db: AsyncSession = Depends(get_db), user=Depends(require_permission("posts:update"))):
     result = await db.execute(select(Post).where(Post.id == id))
     post = result.scalar_one_or_none()
     if not post:
@@ -116,7 +116,7 @@ async def update_post(id: int, data: PostUpdate, db: AsyncSession = Depends(get_
 
 
 @router.delete("/{id}")
-async def delete_post(id: int, db: AsyncSession = Depends(get_db), user=Depends(require_admin)):
+async def delete_post(id: int, db: AsyncSession = Depends(get_db), user=Depends(require_permission("posts:delete"))):
     result = await db.execute(select(Post).where(Post.id == id))
     post = result.scalar_one_or_none()
     if not post:

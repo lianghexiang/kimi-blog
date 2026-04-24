@@ -2,11 +2,12 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from app.auth.router import router as auth_router
-from app.auth.oauth import oauth_callback
 from app.routers.posts import router as posts_router
 from app.routers.images import router as images_router
 from app.routers.tags import router as tags_router
 from app.routers.contacts import router as contacts_router
+from app.routers.users import router as users_router
+from app.routers.roles import router as roles_router
 from app.schemas import PingResponse
 
 app = FastAPI()
@@ -27,16 +28,13 @@ async def ping():
     return {"ok": True, "ts": int(time.time() * 1000)}
 
 
-@app.get("/api/oauth/callback")
-async def oauth_callback_handler(request: Request):
-    return await oauth_callback(request)
-
-
 app.include_router(auth_router, prefix="/api")
 app.include_router(posts_router, prefix="/api")
 app.include_router(images_router, prefix="/api")
 app.include_router(tags_router, prefix="/api")
 app.include_router(contacts_router, prefix="/api")
+app.include_router(users_router, prefix="/api")
+app.include_router(roles_router, prefix="/api")
 
 
 @app.exception_handler(404)

@@ -67,7 +67,7 @@ app/                        # Frontend source
 backend/                    # FastAPI backend (Python)
 ├── app/
 │   ├── main.py             # FastAPI entry, register routers, static files
-│   ├── config.py           # Pydantic Settings, reads ../app/.env
+│   ├── config.py           # Pydantic Settings, reads backend/.env
 │   ├── database.py         # SQLAlchemy async engine + sessionmaker
 │   ├── models.py           # ORM models (6 tables)
 │   ├── schemas.py          # Pydantic DTO (Request / Response)
@@ -140,7 +140,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 3000
 
 ### Database
 
-Requires `DATABASE_URL` in `.env`.
+Requires `DATABASE_URL` in `backend/.env`.
 
 ```bash
 cd backend
@@ -289,27 +289,27 @@ Uses SQLAlchemy 2.0 ORM with MySQL dialect (asyncmy driver).
 
 ## Environment Variables
 
-Copy `app/.env.example` to `app/.env` and fill in values.
+Copy `backend/.env.example` to `backend/.env` and `app/.env.example` to `app/.env`, then fill in values.
+
+#### Backend (`backend/.env`)
 
 ```bash
-# Backend / FastAPI
 APP_ID=                   # Kimi OAuth app ID
 APP_SECRET=               # JWT signing secret + OAuth client secret
 DATABASE_URL=             # mysql://user:pass@host:port/db
-
-# Frontend (Vite exposes VITE_* vars to browser)
-VITE_KIMI_AUTH_URL=       # Kimi OAuth authorize endpoint base URL
-VITE_APP_ID=              # Same as APP_ID
-
-# Backend auth endpoints
-KIMI_AUTH_URL=            # Same as VITE_KIMI_AUTH_URL (backend side)
+KIMI_AUTH_URL=            # Kimi OAuth authorize endpoint base URL
 KIMI_OPEN_URL=            # Kimi Open Platform base URL
-
-# Admin
 OWNER_UNION_ID=           # First user with this unionId gets admin role
 ```
 
-> FastAPI reads `.env` from `app/.env` (same file as before). The `DATABASE_URL` must use `mysql://` scheme; FastAPI automatically converts it to `mysql+asyncmy://` internally.
+#### Frontend (`app/.env`)
+
+```bash
+VITE_KIMI_AUTH_URL=       # Kimi OAuth authorize endpoint base URL
+VITE_APP_ID=              # Same as APP_ID
+```
+
+> FastAPI reads `.env` from `backend/.env`. The `DATABASE_URL` must use `mysql://` scheme; FastAPI automatically converts it to `mysql+asyncmy://` internally.
 
 ---
 

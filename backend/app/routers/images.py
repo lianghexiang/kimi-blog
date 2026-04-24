@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from typing import Optional
 from app.database import get_db
-from app.dependencies import require_admin
+from app.dependencies import require_permission
 from app.models import Image
 from app.schemas import ImageResponse, ImageCreate
 
@@ -20,7 +20,7 @@ async def list_images(album: Optional[str] = None, db: AsyncSession = Depends(ge
 
 
 @router.post("", response_model=ImageResponse, status_code=status.HTTP_201_CREATED)
-async def create_image(data: ImageCreate, db: AsyncSession = Depends(get_db), user=Depends(require_admin)):
+async def create_image(data: ImageCreate, db: AsyncSession = Depends(get_db), user=Depends(require_permission("images:create"))):
     image = Image(**data.model_dump())
     db.add(image)
     await db.commit()
@@ -29,7 +29,7 @@ async def create_image(data: ImageCreate, db: AsyncSession = Depends(get_db), us
 
 
 @router.delete("/{id}")
-async def delete_image(id: int, db: AsyncSession = Depends(get_db), user=Depends(require_admin)):
+async def delete_image(id: int, db: AsyncSession = Depends(get_db), user=Depends(require_permission("images:delete"))):
     result = await db.execute(select(Image).where(Image.id == id))
     image = result.scalar_one_or_none()
     if not image:

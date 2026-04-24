@@ -6,11 +6,10 @@ JWT_ALG = "HS256"
 MAX_AGE_SECONDS = 365 * 24 * 60 * 60  # 1 year
 
 
-def sign_session(payload: dict) -> str:
+def sign_session(user_id: int) -> str:
     now = datetime.now(timezone.utc)
     to_encode = {
-        "union_id": payload.get("union_id"),
-        "client_id": payload.get("client_id"),
+        "user_id": user_id,
         "iat": now,
         "exp": now + timedelta(seconds=MAX_AGE_SECONDS),
     }
@@ -22,10 +21,9 @@ def verify_session(token: str) -> dict | None:
         return None
     try:
         payload = jwt.decode(token, settings.app_secret, algorithms=[JWT_ALG])
-        union_id = payload.get("union_id")
-        client_id = payload.get("client_id")
-        if not union_id or not client_id:
+        user_id = payload.get("user_id")
+        if not user_id:
             return None
-        return {"union_id": union_id, "client_id": client_id}
+        return {"user_id": user_id}
     except JWTError:
         return None

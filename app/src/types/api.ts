@@ -1,14 +1,29 @@
-export type UserRole = "user" | "admin";
 export type PostType = "blog" | "journal" | "thought";
 export type PostStatus = "published" | "draft";
 
+export type Permission = {
+  id: number;
+  name: string;
+  resource: string;
+  action: string;
+  description: string | null;
+};
+
+export type Role = {
+  id: number;
+  name: string;
+  description: string | null;
+  permissions: Permission[];
+};
+
 export type User = {
   id: number;
-  unionId: string;
+  username: string;
   name: string | null;
   email: string | null;
   avatar: string | null;
-  role: UserRole;
+  isActive: boolean;
+  roles: Role[];
   createdAt: string;
   updatedAt: string;
   lastSignInAt: string;
@@ -95,4 +110,46 @@ export type ContactCreateInput = {
   name: string;
   email: string;
   message: string;
+};
+
+export type RegisterInput = {
+  username: string;
+  password: string;
+  email?: string;
+  name?: string;
+};
+
+export type LoginInput = {
+  username: string;
+  password: string;
+};
+
+export type UserCreateInput = {
+  username: string;
+  password: string;
+  email?: string;
+  name?: string;
+  isActive?: boolean;
+  roleIds?: number[];
+};
+
+export type UserUpdateInput = {
+  username?: string;
+  email?: string;
+  name?: string;
+  avatar?: string;
+  isActive?: boolean;
+  roleIds?: number[];
+};
+
+export type RoleCreateInput = {
+  name: string;
+  description?: string;
+  permissionIds?: number[];
+};
+
+export type RoleUpdateInput = {
+  name?: string;
+  description?: string;
+  permissionIds?: number[];
 };

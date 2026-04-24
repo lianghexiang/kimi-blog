@@ -30,7 +30,7 @@ from app.config import settings
 database_url = settings.database_url
 if database_url.startswith("mysql://"):
     database_url = database_url.replace("mysql://", "mysql+asyncmy://", 1)
-config.set_main_option("sqlalchemy.url", database_url)
+config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
 
 def run_migrations_offline() -> None:

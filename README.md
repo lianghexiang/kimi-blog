@@ -89,8 +89,15 @@ git clone <repo-url>
 cd <project-dir>
 
 # 配置环境变量
-cp app/.env.example app/.env
-# 编辑 app/.env，填写所有必填项（见下节）
+# 后端
+cd backend
+cp .env.example .env
+# 编辑 backend/.env，填写后端必填项
+
+# 前端
+cd ../app
+cp .env.example .env
+# 编辑 app/.env，填写前端必填项
 ```
 
 ### 2. 启动后端
@@ -132,7 +139,9 @@ npm run dev
 
 ## 环境变量
 
-所有配置集中在 `app/.env` 中，FastAPI 后端会自动读取该文件。
+前后端环境变量分开管理：
+- 后端配置放在 `backend/.env`，FastAPI 会自动读取。
+- 前端配置放在 `app/.env`，Vite 会自动读取并以 `VITE_` 前缀注入浏览器。
 
 ### 必填项
 
@@ -183,7 +192,7 @@ alembic upgrade head
 ### Alembic 配置
 
 - `alembic.ini` 与 `alembic/env.py` 已配置为异步模式（`mysql+asyncmy://`）。
-- 若数据库 URL 变更，Alembic 会从 `app/.env` 的 `DATABASE_URL` 自动读取，无需手动修改 `alembic.ini`。
+- 若数据库 URL 变更，Alembic 会从 `backend/.env` 的 `DATABASE_URL` 自动读取，无需手动修改 `alembic.ini`。
 
 ---
 
@@ -273,7 +282,7 @@ FastAPI 在生产模式下会：
 
 #### 后端启动报错 `Could not parse SQLAlchemy URL`
 - **原因**：`DATABASE_URL` 为空或格式不正确。
-- **解决**：检查 `app/.env` 中的 `DATABASE_URL` 是否已填写且以 `mysql://` 开头。
+- **解决**：检查 `backend/.env` 中的 `DATABASE_URL` 是否已填写且以 `mysql://` 开头。
 
 #### 前端请求 401 Unauthorized
 - **原因**：`kimi_sid` cookie 未正确传递。
@@ -284,7 +293,7 @@ FastAPI 在生产模式下会：
 
 #### OAuth 回调失败
 - **原因**：`APP_ID`、`APP_SECRET`、`KIMI_AUTH_URL`、`KIMI_OPEN_URL` 配置错误。
-- **解决**：检查 `.env` 中所有 OAuth 相关变量，确保与 Kimi 开放平台后台配置一致。
+- **解决**：检查 `backend/.env` 中的 OAuth 相关变量，确保与 Kimi 开放平台后台配置一致。
 
 #### 数据库连接超时（asyncmy）
 - **原因**：MySQL 未启动、网络不通、或连接串错误。

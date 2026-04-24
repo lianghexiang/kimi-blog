@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
-from app.dependencies import require_admin
+from app.dependencies import require_permission
 from app.models import Tag
 from app.schemas import TagResponse, TagCreate
 
@@ -16,7 +16,7 @@ async def list_tags(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("", response_model=TagResponse, status_code=201)
-async def create_tag(data: TagCreate, db: AsyncSession = Depends(get_db), user=Depends(require_admin)):
+async def create_tag(data: TagCreate, db: AsyncSession = Depends(get_db), user=Depends(require_permission("tags:create"))):
     tag = Tag(**data.model_dump())
     db.add(tag)
     await db.commit()
