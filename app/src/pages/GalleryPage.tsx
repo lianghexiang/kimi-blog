@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { trpc } from "@/providers/trpc";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/sections/Footer";
 import { Camera, Image, MapPin } from "lucide-react";
@@ -14,7 +15,10 @@ const fallbackImages = [
 
 export default function GalleryPage() {
   const [selectedAlbum, setSelectedAlbum] = useState<string | null>(null);
-  const { data: dbImages } = trpc.image.list.useQuery();
+  const { data: dbImages } = useQuery({
+    queryKey: ["images", "list"],
+    queryFn: () => api.images.list(),
+  });
 
   const images = dbImages && dbImages.length > 0
     ? dbImages.map((img) => ({

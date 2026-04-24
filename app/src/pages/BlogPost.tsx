@@ -1,5 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router";
-import { trpc } from "@/providers/trpc";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/sections/Footer";
 import ReactMarkdown from "react-markdown";
@@ -8,10 +9,11 @@ import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { data: post, isLoading } = trpc.post.getBySlug.useQuery(
-    { slug: slug! },
-    { enabled: !!slug }
-  );
+  const { data: post, isLoading } = useQuery({
+    queryKey: ["posts", "slug", slug],
+    queryFn: () => api.posts.getBySlug(slug!),
+    enabled: !!slug,
+  });
 
   if (isLoading) {
     return (

@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { trpc } from "@/providers/trpc";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/sections/Footer";
 import { Calendar, BookOpen, Search } from "lucide-react";
 
 export default function Journal() {
   const [search, setSearch] = useState("");
-  const { data: entries, isLoading } = trpc.post.list.useQuery({
-    type: "journal",
-    status: "published",
+  const { data: entries, isLoading } = useQuery({
+    queryKey: ["posts", "list", { type: "journal", status: "published" }],
+    queryFn: () => api.posts.list({ type: "journal", status: "published" }),
   });
 
   const filteredEntries = entries?.filter((entry) => {

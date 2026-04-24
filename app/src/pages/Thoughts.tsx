@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { trpc } from "@/providers/trpc";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/sections/Footer";
 import { Sparkles, Clock, Search } from "lucide-react";
 
 export default function Thoughts() {
   const [search, setSearch] = useState("");
-  const { data: thoughts, isLoading } = trpc.post.list.useQuery({
-    type: "thought",
-    status: "published",
+  const { data: thoughts, isLoading } = useQuery({
+    queryKey: ["posts", "list", { type: "thought", status: "published" }],
+    queryFn: () => api.posts.list({ type: "thought", status: "published" }),
   });
 
   const filtered = thoughts?.filter((t) => {

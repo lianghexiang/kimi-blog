@@ -1,7 +1,9 @@
+import type { PostUpdateInput } from "@/types/api";
 import { useState } from "react";
 import { Link } from "react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { trpc } from "@/providers/trpc";
+import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import {
   LayoutDashboard,
@@ -110,7 +112,7 @@ function PostsTab({
   postType: "blog" | "journal" | "thought" | "all";
   setPostType: (t: "blog" | "journal" | "thought" | "all") => void;
 }) {
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -121,26 +123,35 @@ function PostsTab({
     status: "published" as "published" | "draft",
   });
 
-  const { data: posts } = trpc.post.list.useQuery(
-    postType === "all" ? undefined : { type: postType }
-  );
-  const createPost = trpc.post.create.useMutation({
+  const { data: posts } = useQuery({
+    queryKey: ["posts", "list", postType === "all" ? undefined : { type: postType }],
+    queryFn: () => api.posts.list(postType === "all" ? undefined : { type: postType }),
+  });
+
+  const createPost = useMutation({
+    mutationFn: api.posts.create,
     onSuccess: () => {
-      utils.post.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: ["posts", "list"] });
       setShowForm(false);
       resetForm();
     },
   });
-  const updatePost = trpc.post.update.useMutation({
+
+  const updatePost = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: PostUpdateInput }) => api.posts.update(id, data),
     onSuccess: () => {
-      utils.post.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: ["posts", "list"] });
       setShowForm(false);
       setEditingId(null);
       resetForm();
     },
   });
-  const deletePost = trpc.post.delete.useMutation({
-    onSuccess: () => utils.post.list.invalidate(),
+
+  const deletePost = useMutation({
+    mutationFn: api.posts.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts", "list"] });
+    },
   });
 
   const resetForm = () => {
@@ -152,7 +163,7 @@ function PostsTab({
     if (!formData.title || !formData.content || !formData.slug) return;
 
     if (editingId) {
-      updatePost.mutate({ id: editingId, ...formData });
+      updatePost.mutate({ id: editingId, data: formData });
     } else {
       createPost.mutate(formData);
     }
@@ -317,7 +328,7 @@ function PostsTab({
               <button
                 onClick={() => {
                   if (confirm("确定删除这篇文章？")) {
-                    deletePost.mutate({ id: post.id });
+                    deletePost.mutate(post.id);
                   }
                 }}
                 className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -337,7 +348,7 @@ function PostsTab({
 
 /* ─── Images Tab ─── */
 function ImagesTab() {
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -346,16 +357,25 @@ function ImagesTab() {
     album: "",
   });
 
-  const { data: images } = trpc.image.list.useQuery();
-  const createImage = trpc.image.create.useMutation({
+  const { data: images } = useQuery({
+    queryKey: ["images", "list"],
+    queryFn: () => api.images.list(),
+  });
+
+  const createImage = useMutation({
+    mutationFn: api.images.create,
     onSuccess: () => {
-      utils.image.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: ["images", "list"] });
       setShowForm(false);
       setFormData({ title: "", description: "", url: "", album: "" });
     },
   });
-  const deleteImage = trpc.image.delete.useMutation({
-    onSuccess: () => utils.image.list.invalidate(),
+
+  const deleteImage = useMutation({
+    mutationFn: api.images.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["images", "list"] });
+    },
   });
 
   return (
@@ -436,7 +456,7 @@ function ImagesTab() {
               <button
                 onClick={() => {
                   if (confirm("确定删除这张图片？")) {
-                    deleteImage.mutate({ id: img.id });
+                    deleteImage.mutate(img.id);
                   }
                 }}
                 className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -456,15 +476,20 @@ function ImagesTab() {
 
 /* ─── Tags Tab ─── */
 function TagsTab() {
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [color, setColor] = useState("#3B82F6");
 
-  const { data: tags } = trpc.tag.list.useQuery();
-  const createTag = trpc.tag.create.useMutation({
+  const { data: tags } = useQuery({
+    queryKey: ["tags", "list"],
+    queryFn: () => api.tags.list(),
+  });
+
+  const createTag = useMutation({
+    mutationFn: api.tags.create,
     onSuccess: () => {
-      utils.tag.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: ["tags", "list"] });
       setShowForm(false);
       setName("");
       setColor("#3B82F6");
@@ -541,7 +566,10 @@ function TagsTab() {
 
 /* ─── Contacts Tab ─── */
 function ContactsTab() {
-  const { data: contacts, isLoading } = trpc.contact.list.useQuery();
+  const { data: contacts, isLoading } = useQuery({
+    queryKey: ["contacts", "list"],
+    queryFn: () => api.contacts.list(),
+  });
 
   return (
     <div>

@@ -1,6 +1,7 @@
-import { trpc } from "@/providers/trpc";
 import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { LOGIN_PATH } from "@/const";
 
 type UseAuthOptions = {
@@ -9,26 +10,27 @@ type UseAuthOptions = {
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  const { redirectOnUnauthenticated = false, redirectPath = LOGIN_PATH } =
-    options ?? {};
+  const { redirectOnUnauthenticated = false, redirectPath = LOGIN_PATH } = options ?? {};
 
   const navigate = useNavigate();
-
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
 
   const {
     data: user,
     isLoading,
     error,
     refetch,
-  } = trpc.auth.me.useQuery(undefined, {
+  } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: () => api.auth.me(),
     staleTime: 1000 * 60 * 5,
     retry: false,
   });
 
-  const logoutMutation = trpc.auth.logout.useMutation({
+  const logoutMutation = useMutation({
+    mutationFn: () => api.auth.logout(),
     onSuccess: async () => {
-      await utils.invalidate();
+      await queryClient.invalidateQueries();
       navigate(redirectPath);
     },
   });
@@ -53,6 +55,6 @@ export function useAuth(options?: UseAuthOptions) {
       logout,
       refresh: refetch,
     }),
-    [user, isLoading, logoutMutation.isPending, error, logout, refetch],
+    [user, isLoading, logoutMutation.isPending, error, logout, refetch]
   );
 }

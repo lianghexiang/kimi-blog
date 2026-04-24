@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { trpc } from "@/providers/trpc";
+import { useMutation } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import { Mail, Instagram, Twitter, Send, Heart } from "lucide-react";
 
 export default function Footer() {
@@ -8,7 +9,8 @@ export default function Footer() {
   const [name, setName] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const submitContact = trpc.contact.submit.useMutation({
+  const submitContact = useMutation({
+    mutationFn: (data: { name: string; email: string; message: string }) => api.contacts.submit(data),
     onSuccess: () => {
       setSubmitted(true);
       setEmail("");

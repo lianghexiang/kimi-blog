@@ -1,17 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { trpc } from "@/providers/trpc";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/sections/Footer";
 import { Calendar, Clock, Tag, Search } from "lucide-react";
 
 export default function Blog() {
   const [search, setSearch] = useState("");
-  const { data: posts, isLoading } = trpc.post.list.useQuery({
-    type: "blog",
-    status: "published",
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ["posts", "list", { type: "blog", status: "published" }],
+    queryFn: () => api.posts.list({ type: "blog", status: "published" }),
   });
-  const { data: allTags } = trpc.tag.list.useQuery();
+  const { data: allTags } = useQuery({
+    queryKey: ["tags", "list"],
+    queryFn: () => api.tags.list(),
+  });
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const filteredPosts = posts?.filter((post) => {
