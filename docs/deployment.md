@@ -104,19 +104,35 @@ MYSQL_PASSWORD=kimiblog_pass
 
 ### 3. 启动服务
 
+#### 生产环境（推荐）
+
 ```bash
 # 构建并启动（首次）
-docker compose up --build -d
+docker compose -f docker-compose.yml up --build -d
 
-# 仅启动（已有镜像）
-docker compose up -d
+# 仅重启（修改 .env 后）
+docker compose -f docker-compose.yml restart app
 
 # 查看日志
-docker compose logs -f app
-
-# 查看数据库日志
-docker compose logs -f db
+docker compose -f docker-compose.yml logs -f app
 ```
+
+> 生产部署使用 `-f docker-compose.yml` 明确指定，避免加载开发用的 `docker-compose.override.yml`。
+
+#### 开发环境
+
+```bash
+# 同时启动后端（Docker）和数据库
+docker compose up -d
+
+# 前端在宿主机运行（热重载）
+cd app && npm run dev
+```
+
+开发模式下：
+- 后端 API：`http://localhost:8000`（Docker 内，代码挂载 + `--reload`）
+- 前端 dev server：`http://localhost:5000`（宿主机上 `npm run dev`）
+- 数据库：`localhost:3307`
 
 首次启动时，`app` 容器会等待数据库健康检查通过后再启动。数据库表结构和默认数据会自动创建。
 
@@ -157,16 +173,19 @@ docker compose logs app | grep ERROR
 ### 重启与更新
 
 ```bash
-# 修改代码后重新构建并重启
-docker compose up --build -d app
+# 修改代码后重新构建并重启（生产）
+docker compose -f docker-compose.yml up --build -d app
+
+# 修改 .env 后重启即可（无需重建镜像）
+docker compose -f docker-compose.yml restart app
 
 # 拉取最新代码后完整重建
 git pull
-docker compose down
-docker compose up --build -d
+docker compose -f docker-compose.yml down
+docker compose -f docker-compose.yml up --build -d
 
 # 仅重启某个服务
-docker compose restart app
+docker compose -f docker-compose.yml restart app
 ```
 
 ### 数据库备份与恢复
@@ -185,8 +204,11 @@ docker exec -i kimiblog-db mysql -u root -p"${MYSQL_ROOT_PASSWORD}" kimi_blog \
 ### 进入容器排查
 
 ```bash
-# 进入应用容器
+# 进入应用容器（生产）
 docker exec -it kimiblog-app bash
+
+# 进入应用容器（开发）
+docker exec -it kimiblog-app sh
 
 # 进入数据库容器
 docker exec -it kimiblog-db mysql -u root -p

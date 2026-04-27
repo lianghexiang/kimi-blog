@@ -49,6 +49,7 @@ services:
       - "3000:3000"
     volumes:
       - uploads_data:/app/app/public/uploads
+      - ./.env:/app/backend/.env:ro
     networks:
       - kimiblog-net
 
