@@ -1,0 +1,61 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: kimiblog-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-kimiblog_root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-kimi_blog}
+      MYSQL_USER: ${MYSQL_USER:-kimiblog}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-kimiblog_pass}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - kimiblog-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_KIMI_AUTH_URL: ${VITE_KIMI_AUTH_URL:-}
+        VITE_APP_ID: ${VITE_APP_ID:-}
+    container_name: kimiblog-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ID: ${APP_ID:-}
+      APP_SECRET: ${APP_SECRET:-}
+      DATABASE_URL: ${DATABASE_URL:-mysql://kimiblog:kimiblog_pass@db:3306/kimi_blog}
+      KIMI_AUTH_URL: ${KIMI_AUTH_URL:-}
+      KIMI_OPEN_URL: ${KIMI_OPEN_URL:-}
+      OWNER_UNION_ID: ${OWNER_UNION_ID:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      PORT: 3000
+      # CORS_ORIGINS: comma-separated list, e.g. https://your-domain.com
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads_data:/app/app/public/uploads
+    networks:
+      - kimiblog-net
+
+volumes:
+  db_data:
+  uploads_data:
+
+networks:
+  kimiblog-net:
+    driver: bridge
