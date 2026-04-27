@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
@@ -8,14 +9,30 @@ from app.routers.tags import router as tags_router
 from app.routers.contacts import router as contacts_router
 from app.routers.users import router as users_router
 from app.routers.roles import router as roles_router
+from app.routers.albums import router as albums_router
+from app.routers.site_configs import router as site_configs_router
 from app.schemas import PingResponse
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from app.database import async_engine
+    from app.models import Base
+    from app.seed import ensure_defaults
+
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    await ensure_defaults()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 # CORS for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://localhost:5000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,6 +52,8 @@ app.include_router(tags_router, prefix="/api")
 app.include_router(contacts_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(roles_router, prefix="/api")
+app.include_router(albums_router, prefix="/api")
+app.include_router(site_configs_router, prefix="/api")
 
 
 @app.exception_handler(404)
@@ -45,9 +64,15 @@ async def not_found_handler(request: Request, exc):
     return JSONResponse(status_code=404, content={"error": "Not Found"})
 
 
-# SPA fallback — mount static files and catch-all
+# Uploads static files
 import os
 
+UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "app", "public", "uploads")
+if os.path.isdir(UPLOADS_DIR):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+
+# SPA fallback — mount static files and catch-all
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "app", "dist", "public")
 
 if os.path.isdir(STATIC_DIR):

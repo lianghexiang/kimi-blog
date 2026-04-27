@@ -33,6 +33,7 @@ export type Tag = {
   id: number;
   name: string;
   color: string;
+  createdAt: string;
 };
 
 export type Post = {
@@ -45,9 +46,16 @@ export type Post = {
   status: PostStatus;
   createdAt: string;
   updatedAt: string;
+  tags: Tag[];
 };
 
 export type PostWithTags = Post & { tags: Tag[] };
+
+export type Album = {
+  id: number;
+  name: string;
+  createdAt: string;
+};
 
 export type Image = {
   id: number;
@@ -152,4 +160,11 @@ export type RoleUpdateInput = {
   name?: string;
   description?: string;
   permissionIds?: number[];
+};
+
+export type SiteConfig = {
+  id: number;
+  key: string;
+  value: string | null;
+  updatedAt: string;
 };

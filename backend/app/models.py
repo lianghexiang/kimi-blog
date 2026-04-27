@@ -96,6 +96,14 @@ class Post(Base):
     updated_at = Column("updated_at", DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
+class Album(Base):
+    __tablename__ = "albums"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), unique=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
 class Image(Base):
     __tablename__ = "images"
 
@@ -114,6 +122,7 @@ class Tag(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True, nullable=False)
     color = Column(String(7), default="#3B82F6", nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class Contact(Base):
@@ -124,3 +133,12 @@ class Contact(Base):
     email = Column(String(320), nullable=False)
     message = Column(Text, nullable=False)
     created_at = Column("created_at", DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class SiteConfig(Base):
+    __tablename__ = "site_configs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    key = Column(String(100), unique=True, nullable=False)
+    value = Column(Text, nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

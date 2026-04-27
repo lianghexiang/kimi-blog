@@ -1,13 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
-from typing import Optional
+from sqlalchemy import select, desc, distinct
+from typing import Optional, List
+import os
+import uuid
+from pathlib import Path
 from app.database import get_db
 from app.dependencies import require_permission
 from app.models import Image
 from app.schemas import ImageResponse, ImageCreate
 
 router = APIRouter(prefix="/images")
+
+# 确保上传目录存在
+UPLOAD_DIR = Path("../app/public/uploads")
+UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
+
+# 允许的图片类型
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "gif"}
+# 文件大小限制（5MB）
+MAX_FILE_SIZE = 5 * 1024 * 1024
+
+def allowed_file(filename: str) -> bool:
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @router.get("", response_model=list[ImageResponse])
@@ -17,6 +32,65 @@ async def list_images(album: Optional[str] = None, db: AsyncSession = Depends(ge
         query = query.where(Image.album == album)
     result = await db.execute(query)
     return result.scalars().all()
+
+
+@router.get("/albums", response_model=List[str])
+async def get_albums(db: AsyncSession = Depends(get_db)):
+    """获取所有相册分类"""
+    query = select(distinct(Image.album)).where(Image.album.isnot(None))
+    result = await db.execute(query)
+    albums = [album for album, in result.all() if album]
+    return albums
+
+
+@router.post("/upload", response_model=ImageResponse, status_code=status.HTTP_201_CREATED)
+async def upload_image(
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
+    album: Optional[str] = Form(None),
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    user=Depends(require_permission("images:create"))
+):
+    """上传本地图片"""
+    # 验证文件类型
+    if not allowed_file(file.filename):
+        raise HTTPException(
+            status_code=400,
+            detail="只支持 JPG、PNG、WEBP、GIF 格式的图片"
+        )
+    
+    # 验证文件大小
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="文件大小不能超过 5MB"
+        )
+    
+    # 生成唯一文件名
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    unique_filename = f"{uuid.uuid4()}.{ext}"
+    file_path = UPLOAD_DIR / unique_filename
+    
+    # 保存文件
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    # 生成访问 URL
+    file_url = f"/uploads/{unique_filename}"
+    
+    # 创建图片记录
+    image = Image(
+        title=title,
+        description=description,
+        url=file_url,
+        album=album
+    )
+    db.add(image)
+    await db.commit()
+    await db.refresh(image)
+    return image
 
 
 @router.post("", response_model=ImageResponse, status_code=status.HTTP_201_CREATED)

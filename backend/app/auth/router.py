@@ -1,6 +1,8 @@
+from typing import Optional
 from fastapi import APIRouter, Request, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.schemas import UserResponse, LogoutResponse, RegisterRequest, LoginRequest
@@ -49,6 +51,12 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if role:
         user.roles.append(role)
         await db.commit()
+        result = await db.execute(
+            select(User)
+            .where(User.id == user.id)
+            .options(selectinload(User.roles).selectinload(Role.permissions))
+        )
+        user = result.scalar_one()
 
     return user
 
@@ -64,6 +72,7 @@ async def login(data: LoginRequest, request: Request, db: AsyncSession = Depends
         raise HTTPException(status_code=403, detail="账号已被禁用")
 
     from datetime import datetime, timezone
+
     user.last_sign_in_at = datetime.now(timezone.utc)
     await db.commit()
 
@@ -74,10 +83,8 @@ async def login(data: LoginRequest, request: Request, db: AsyncSession = Depends
     return response
 
 
-@router.get("/me", response_model=UserResponse)
-async def me(user: User | None = Depends(get_current_user)):
-    if not user:
-        raise HTTPException(status_code=401, detail="请先登录")
+@router.get("/me", response_model=Optional[UserResponse])
+async def me(user: Optional[User] = Depends(get_current_user)):
     return user
 
 

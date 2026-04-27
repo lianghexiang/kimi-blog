@@ -1,5 +1,6 @@
 from jose import jwt, JWTError
 from datetime import datetime, timezone, timedelta
+from typing import Optional
 from app.config import settings
 
 JWT_ALG = "HS256"
@@ -16,7 +17,7 @@ def sign_session(user_id: int) -> str:
     return jwt.encode(to_encode, settings.app_secret, algorithm=JWT_ALG)
 
 
-def verify_session(token: str) -> dict | None:
+def verify_session(token: str) -> Optional[dict]:
     if not token:
         return None
     try:

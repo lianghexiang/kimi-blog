@@ -7,8 +7,9 @@ const navLinks = [
   { label: "首页", href: "/" },
   { label: "博文", href: "/blog" },
   { label: "日志", href: "/journal" },
-  { label: "随想", href: "/thoughts" },
+  { label: "便签", href: "/thoughts" },
   { label: "画廊", href: "/gallery" },
+  { label: "标签", href: "/tags" },
 ];
 
 export default function Navbar() {

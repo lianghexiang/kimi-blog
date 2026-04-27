@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.dependencies import require_permission
 from app.models import Role, Permission
@@ -14,7 +15,7 @@ async def list_roles(
     db: AsyncSession = Depends(get_db),
     user=Depends(require_permission("roles:read")),
 ):
-    result = await db.execute(select(Role))
+    result = await db.execute(select(Role).options(selectinload(Role.permissions)))
     return result.scalars().all()
 
 
@@ -54,7 +55,7 @@ async def update_role(
     db: AsyncSession = Depends(get_db),
     user=Depends(require_permission("roles:update")),
 ):
-    result = await db.execute(select(Role).where(Role.id == id))
+    result = await db.execute(select(Role).where(Role.id == id).options(selectinload(Role.permissions)))
     role = result.scalar_one_or_none()
     if not role:
         raise HTTPException(status_code=404, detail="角色不存在")

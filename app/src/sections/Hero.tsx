@@ -1,7 +1,36 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import gsap from "gsap";
 import { ArrowRight } from "lucide-react";
+import { api } from "@/lib/api";
+
+function useSiteConfig() {
+  const { data } = useQuery({
+    queryKey: ["site-configs"],
+    queryFn: api.siteConfigs.list,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const map: Record<string, string> = {};
+  if (data) {
+    for (const c of data) {
+      if (c.value !== null) {
+        map[c.key] = c.value;
+      }
+    }
+  }
+
+  return {
+    badgeText: map["hero_badge_text"] || "欢迎来到我的小世界",
+    titlePrefix: map["hero_title_prefix"] || "Hey!",
+    titleSuffix: map["hero_title_suffix"] || "你好呀",
+    subtitle: map["hero_subtitle"] || "我是小桃，我在这里记录那些被风吹过的日常。无论是路边的一朵野花，还是深夜的一段旋律，都值得被记录下来。",
+    buttonText: map["hero_button_text"] || "开始逛逛",
+    avatarUrl: map["hero_avatar_url"] || "/avatar-girl.png",
+    bgImageUrl: map["hero_bg_image_url"] || "",
+  };
+}
 
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -9,6 +38,8 @@ export default function Hero() {
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const btnRef = useRef<HTMLAnchorElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+
+  const config = useSiteConfig();
 
   useEffect(() => {
     const tl = gsap.timeline({ defaults: { ease: "elastic.out(1, 0.5)" } });
@@ -63,10 +94,21 @@ export default function Hero() {
     return () => section.removeEventListener("mousemove", onMouseMove);
   }, []);
 
+  const sectionStyle: React.CSSProperties = config.bgImageUrl
+    ? {
+        backgroundImage: `url(${config.bgImageUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : {};
+
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen flex items-center overflow-hidden bg-[#F9FAFB] pt-16"
+      className={`relative min-h-screen flex items-center overflow-hidden pt-16 ${
+        config.bgImageUrl ? "" : "bg-[#F9FAFB]"
+      }`}
+      style={sectionStyle}
     >
       {/* Decorative elements */}
       <div className="absolute top-20 left-10 w-20 h-20 bg-blue-500 rounded-full opacity-10 animate-float" />
@@ -79,7 +121,7 @@ export default function Hero() {
           <div className="lg:col-span-3 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-mono-type tracking-wide">
               <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-              欢迎来到我的小世界
+              {config.badgeText}
             </div>
 
             <h1
@@ -88,10 +130,10 @@ export default function Hero() {
               style={{ transform: "rotate(-1deg)" }}
             >
               <span className="font-handwrite text-6xl sm:text-7xl lg:text-8xl text-blue-500">
-                Hey!
+                {config.titlePrefix}
               </span>
               <br />
-              <span className="text-gray-900">你好呀</span>
+              <span className="text-gray-900">{config.titleSuffix}</span>
               <span className="inline-block ml-2 animate-bounce">👋</span>
             </h1>
 
@@ -99,7 +141,7 @@ export default function Hero() {
               ref={subtitleRef}
               className="text-lg sm:text-xl text-gray-600 max-w-lg leading-relaxed"
             >
-              我是小桃，我在这里记录那些被风吹过的日常。无论是路边的一朵野花，还是深夜的一段旋律，都值得被记录下来。
+              {config.subtitle}
             </p>
 
             <Link
@@ -107,7 +149,7 @@ export default function Hero() {
               to="/blog"
               className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 text-black font-semibold rounded-xl neo-border neo-shadow hover:translate-x-1 hover:-translate-y-1 transition-all active:translate-x-0 active:translate-y-0 active:shadow-none"
             >
-              开始逛逛
+              {config.buttonText}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -117,7 +159,7 @@ export default function Hero() {
             <div ref={imageRef} className="relative">
               <div className="w-64 h-64 sm:w-80 sm:h-80 relative">
                 <img
-                  src="/avatar-girl.png"
+                  src={config.avatarUrl}
                   alt="博主头像"
                   className="w-full h-full object-contain drop-shadow-2xl"
                 />

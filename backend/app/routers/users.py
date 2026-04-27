@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.dependencies import require_auth, require_permission
 from app.models import User, Role
@@ -19,7 +20,7 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     user=Depends(require_permission("users:read")),
 ):
-    result = await db.execute(select(User))
+    result = await db.execute(select(User).options(selectinload(User.roles).selectinload(Role.permissions)))
     return result.scalars().all()
 
 
@@ -29,7 +30,7 @@ async def get_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_auth),
 ):
-    result = await db.execute(select(User).where(User.id == id))
+    result = await db.execute(select(User).where(User.id == id).options(selectinload(User.roles).selectinload(Role.permissions)))
     target = result.scalar_one_or_none()
     if not target:
         raise HTTPException(status_code=404, detail="用户不存在")
@@ -77,7 +78,7 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_auth),
 ):
-    result = await db.execute(select(User).where(User.id == id))
+    result = await db.execute(select(User).where(User.id == id).options(selectinload(User.roles).selectinload(Role.permissions)))
     target = result.scalar_one_or_none()
     if not target:
         raise HTTPException(status_code=404, detail="用户不存在")

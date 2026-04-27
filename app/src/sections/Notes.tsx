@@ -53,7 +53,7 @@ const noteCards = [
     bg: "bg-yellow-200",
     icon: <CheckSquare className="w-5 h-5" />,
     title: "今日待办",
-    content: "给窗台的绿萝浇水\n读完《月亮与六便士》第三章\n写一段随想笔记",
+    content: "给窗台的绿萝浇水\n读完《月亮与六便士》第三章\n写一段便签笔记",
     rotation: "-2deg",
   },
   {
@@ -154,7 +154,7 @@ export default function Notes() {
             to="/thoughts"
             className="inline-flex items-center gap-2 text-blue-500 hover:text-blue-700 font-medium transition-colors"
           >
-            查看更多随想
+            查看更多便签
             <span>→</span>
           </Link>
         </div>

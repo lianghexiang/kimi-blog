@@ -115,7 +115,7 @@ export default function Footer() {
                   日志
                 </Link>
                 <Link to="/thoughts" className="hover:text-yellow-400 transition-colors">
-                  随想
+                  便签
                 </Link>
                 <Link to="/gallery" className="hover:text-yellow-400 transition-colors">
                   画廊

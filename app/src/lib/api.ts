@@ -5,6 +5,7 @@ import type {
   PostUpdateInput,
   Image,
   ImageCreateInput,
+  Album,
   Tag,
   TagCreateInput,
   Contact,
@@ -18,22 +19,28 @@ import type {
   RoleCreateInput,
   RoleUpdateInput,
   Permission,
+  SiteConfig,
 } from "@/types/api";
 
 const API_BASE = "/api";
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const isFormData = options?.body instanceof FormData;
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers: isFormData
+      ? options?.headers
+      : {
+          "Content-Type": "application/json",
+          ...options?.headers,
+        },
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || res.statusText);
+    const err = await res
+      .json()
+      .catch(() => ({ message: res.statusText, detail: res.statusText }));
+    throw new Error(err.detail || err.message || res.statusText);
   }
   return res.json();
 }
@@ -52,7 +59,7 @@ export const api = {
   ping: () => apiFetch<{ ok: boolean; ts: number }>("/ping"),
 
   auth: {
-    me: () => apiFetch<User>("/auth/me"),
+    me: () => apiFetch<User | null>("/auth/me"),
     login: (data: LoginInput) =>
       apiFetch<{ success: true }>("/auth/login", { method: "POST", body: JSON.stringify(data) }),
     register: (data: RegisterInput) =>
@@ -81,7 +88,7 @@ export const api = {
   },
 
   posts: {
-    list: (params?: { type?: string; status?: string; limit?: number; offset?: number }) =>
+    list: (params?: { type?: string; status?: string; tag?: string; limit?: number; offset?: number }) =>
       apiFetch<Post[]>(`/posts?${qs(params ?? {})}`),
     getBySlug: (slug: string) => apiFetch<PostWithTags>(`/posts/${slug}`),
     create: (data: PostCreateInput) =>
@@ -94,20 +101,42 @@ export const api = {
   images: {
     list: (params?: { album?: string }) =>
       apiFetch<Image[]>(`/images?${qs(params ?? {})}`),
+    getAlbums: () => apiFetch<string[]>("/images/albums"),
     create: (data: ImageCreateInput) =>
       apiFetch<Image>("/images", { method: "POST", body: JSON.stringify(data) }),
+    upload: (formData: FormData) => apiFetch<Image>("/images/upload", {
+      method: "POST",
+      body: formData,
+    }),
     delete: (id: number) => apiFetch<{ success: true }>(`/images/${id}`, { method: "DELETE" }),
+  },
+
+  albums: {
+    list: () => apiFetch<Album[]>("/albums"),
+    create: (data: { name: string }) =>
+      apiFetch<Album>("/albums", { method: "POST", body: JSON.stringify(data) }),
+    delete: (id: number) => apiFetch<{ success: true }>(`/albums/${id}`, { method: "DELETE" }),
   },
 
   tags: {
     list: () => apiFetch<Tag[]>("/tags"),
     create: (data: TagCreateInput) =>
       apiFetch<Tag>("/tags", { method: "POST", body: JSON.stringify(data) }),
+    update: (id: number, data: TagCreateInput) =>
+      apiFetch<Tag>(`/tags/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: number) => apiFetch<{ success: true }>(`/tags/${id}`, { method: "DELETE" }),
+    stats: () => apiFetch<Record<string, number>>("/tags/stats"),
   },
 
   contacts: {
     submit: (data: ContactCreateInput) =>
       apiFetch<Contact>("/contacts", { method: "POST", body: JSON.stringify(data) }),
     list: () => apiFetch<Contact[]>("/contacts"),
+  },
+
+  siteConfigs: {
+    list: () => apiFetch<SiteConfig[]>("/site-configs"),
+    update: (data: Record<string, string | null>) =>
+      apiFetch<SiteConfig[]>("/site-configs", { method: "PUT", body: JSON.stringify({ configs: data }) }),
   },
 };

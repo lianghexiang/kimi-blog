@@ -1,103 +1,131 @@
-import asyncio
-from sqlalchemy import select
-from app.database import _get_session_local
-from app.models import Role, Permission, User
+import logging
+from sqlalchemy import insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+from app.database import async_session_maker
+from app.models import Role, Permission, User, SiteConfig, role_permissions
 from app.auth.password import hash_password
-from app.config import settings
 
-PERMISSIONS_DATA = [
-    # posts
-    {"name": "posts:read", "resource": "posts", "action": "read", "description": "浏览文章"},
-    {"name": "posts:create", "resource": "posts", "action": "create", "description": "创建文章"},
-    {"name": "posts:update", "resource": "posts", "action": "update", "description": "更新文章"},
-    {"name": "posts:delete", "resource": "posts", "action": "delete", "description": "删除文章"},
-    # images
-    {"name": "images:read", "resource": "images", "action": "read", "description": "浏览图片"},
-    {"name": "images:create", "resource": "images", "action": "create", "description": "上传图片"},
-    {"name": "images:delete", "resource": "images", "action": "delete", "description": "删除图片"},
-    # tags
-    {"name": "tags:read", "resource": "tags", "action": "read", "description": "浏览标签"},
-    {"name": "tags:create", "resource": "tags", "action": "create", "description": "创建标签"},
-    {"name": "tags:delete", "resource": "tags", "action": "delete", "description": "删除标签"},
-    # contacts
-    {"name": "contacts:read", "resource": "contacts", "action": "read", "description": "查看留言"},
-    {"name": "contacts:delete", "resource": "contacts", "action": "delete", "description": "删除留言"},
-    # users
-    {"name": "users:read", "resource": "users", "action": "read", "description": "查看用户"},
+logger = logging.getLogger(__name__)
+
+DEFAULT_PERMISSIONS = [
+    {"name": "users:read", "resource": "users", "action": "read", "description": "查看用户列表"},
     {"name": "users:create", "resource": "users", "action": "create", "description": "创建用户"},
-    {"name": "users:update", "resource": "users", "action": "update", "description": "更新用户"},
+    {"name": "users:update", "resource": "users", "action": "update", "description": "更新用户信息"},
     {"name": "users:delete", "resource": "users", "action": "delete", "description": "删除用户"},
-    # roles
-    {"name": "roles:read", "resource": "roles", "action": "read", "description": "查看角色"},
+    {"name": "roles:read", "resource": "roles", "action": "read", "description": "查看角色列表"},
     {"name": "roles:create", "resource": "roles", "action": "create", "description": "创建角色"},
     {"name": "roles:update", "resource": "roles", "action": "update", "description": "更新角色"},
     {"name": "roles:delete", "resource": "roles", "action": "delete", "description": "删除角色"},
+    {"name": "posts:create", "resource": "posts", "action": "create", "description": "创建文章"},
+    {"name": "posts:update", "resource": "posts", "action": "update", "description": "更新文章"},
+    {"name": "posts:delete", "resource": "posts", "action": "delete", "description": "删除文章"},
+    {"name": "images:create", "resource": "images", "action": "create", "description": "上传图片"},
+    {"name": "images:delete", "resource": "images", "action": "delete", "description": "删除图片"},
+    {"name": "tags:create", "resource": "tags", "action": "create", "description": "创建标签"},
+    {"name": "contacts:read", "resource": "contacts", "action": "read", "description": "查看留言"},
+    {"name": "site_configs:update", "resource": "site_configs", "action": "update", "description": "更新站点配置"},
 ]
 
-ROLE_PERMISSIONS_MAP = {
-    "admin": [p["name"] for p in PERMISSIONS_DATA],
-    "editor": [
-        "posts:read", "posts:create", "posts:update", "posts:delete",
-        "images:read", "images:create", "images:delete",
-        "tags:read", "tags:create", "tags:delete",
-        "contacts:read",
-    ],
-    "user": [
-        "posts:read", "images:read", "tags:read",
-    ],
+DEFAULT_ROLES = [
+    {"name": "admin", "description": "超级管理员，拥有所有权限"},
+    {"name": "user", "description": "普通用户"},
+]
+
+
+DEFAULT_SITE_CONFIGS = {
+    "hero_badge_text": "欢迎来到我的小世界",
+    "hero_title_prefix": "Hey!",
+    "hero_title_suffix": "你好呀",
+    "hero_subtitle": "我是小桃，我在这里记录那些被风吹过的日常。无论是路边的一朵野花，还是深夜的一段旋律，都值得被记录下来。",
+    "hero_button_text": "开始逛逛",
+    "hero_avatar_url": "/avatar-girl.png",
+    "hero_bg_image_url": None,
 }
 
 
-async def seed():
-    async with _get_session_local()() as db:
-        # 1. Create permissions
-        perm_map = {}
-        for pdata in PERMISSIONS_DATA:
-            result = await db.execute(select(Permission).where(Permission.name == pdata["name"]))
-            perm = result.scalar_one_or_none()
-            if not perm:
-                perm = Permission(**pdata)
-                db.add(perm)
-                await db.commit()
-                await db.refresh(perm)
-            perm_map[perm.name] = perm
+async def ensure_defaults():
+    async with async_session_maker() as db:
+        await _ensure_permissions(db)
+        await _ensure_roles(db)
+        await _ensure_site_configs(db)
+        await _ensure_admin_user(db)
+        await db.commit()
+        logger.info("Seed data ensured.")
 
-        # 2. Create roles
-        role_map = {}
-        for role_name in ["admin", "editor", "user"]:
-            result = await db.execute(select(Role).where(Role.name == role_name))
-            role = result.scalar_one_or_none()
-            if not role:
-                role = Role(name=role_name)
-                db.add(role)
-                await db.commit()
-                await db.refresh(role)
-            role_map[role_name] = role
 
-        # 3. Assign permissions to roles
-        for role_name, perm_names in ROLE_PERMISSIONS_MAP.items():
-            role = role_map[role_name]
-            role.permissions = [perm_map[name] for name in perm_names]
-            await db.commit()
+async def _ensure_permissions(db: AsyncSession):
+    for perm_data in DEFAULT_PERMISSIONS:
+        result = await db.execute(select(Permission).where(Permission.name == perm_data["name"]))
+        existing = result.scalar_one_or_none()
+        if not existing:
+            perm = Permission(**perm_data)
+            db.add(perm)
+            logger.info(f"Created permission: {perm_data['name']}")
 
-        # 4. Create admin user
-        result = await db.execute(select(User).where(User.username == settings.admin_username))
-        admin = result.scalar_one_or_none()
-        if not admin:
-            admin = User(
-                username=settings.admin_username,
-                password_hash=hash_password(settings.admin_password),
-                name="管理员",
-                email=None,
+
+async def _ensure_roles(db: AsyncSession):
+    # Fetch all permissions for admin role
+    result = await db.execute(select(Permission))
+    all_permissions = result.scalars().all()
+
+    for role_data in DEFAULT_ROLES:
+        result = await db.execute(select(Role).where(Role.name == role_data["name"]))
+        role = result.scalar_one_or_none()
+        if not role:
+            role = Role(name=role_data["name"], description=role_data["description"])
+            db.add(role)
+            await db.flush()
+            logger.info(f"Created role: {role_data['name']}")
+
+        if role_data["name"] == "admin":
+            # Avoid async lazy-loading on relationship access during startup.
+            current_perm_result = await db.execute(
+                select(Permission.name)
+                .join(role_permissions, Permission.id == role_permissions.c.permission_id)
+                .where(role_permissions.c.role_id == role.id)
             )
-            db.add(admin)
-            await db.commit()
-            await db.refresh(admin)
-            admin.roles.append(role_map["admin"])
-            await db.commit()
+            current_perm_names = set(current_perm_result.scalars().all())
+            for perm in all_permissions:
+                if perm.name not in current_perm_names:
+                    await db.execute(
+                        insert(role_permissions).values(
+                            role_id=role.id,
+                            permission_id=perm.id,
+                        )
+                    )
+                    logger.info(f"Granted {perm.name} to admin")
 
-        print("Seed completed successfully.")
+
+async def _ensure_site_configs(db: AsyncSession):
+    for key, value in DEFAULT_SITE_CONFIGS.items():
+        result = await db.execute(select(SiteConfig).where(SiteConfig.key == key))
+        existing = result.scalar_one_or_none()
+        if not existing:
+            db.add(SiteConfig(key=key, value=value))
+            logger.info(f"Created site config: {key}")
 
 
-if __name__ == "__main__":
-    asyncio.run(seed())
+async def _ensure_admin_user(db: AsyncSession):
+    result = await db.execute(select(User).where(User.username == "admin"))
+    existing = result.scalar_one_or_none()
+    if existing:
+        return
+
+    # Get admin role
+    result = await db.execute(select(Role).where(Role.name == "admin").options(selectinload(Role.users)))
+    admin_role = result.scalar_one_or_none()
+    if not admin_role:
+        logger.warning("Admin role not found, skipping default admin user creation")
+        return
+
+    admin = User(
+        username="admin",
+        email="admin@example.com",
+        password_hash=hash_password("admin123"),
+        name="管理员",
+        is_active=True,
+    )
+    admin.roles.append(admin_role)
+    db.add(admin)
+    logger.info("Created default admin user (admin / admin123)")

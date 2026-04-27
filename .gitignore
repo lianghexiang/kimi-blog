@@ -9,7 +9,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
-
+.trae
 # Virtual environments
 venv/
 .venv/

@@ -170,6 +170,41 @@
   animation: float 3s ease-in-out infinite;
 }
 
+@keyframes galleryPreviewSlideNext {
+  0% {
+    opacity: 0;
+    transform: translate3d(40px, 0, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes galleryPreviewSlidePrev {
+  0% {
+    opacity: 0;
+    transform: translate3d(-40px, 0, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.gallery-preview-frame,
+.gallery-preview-meta {
+  will-change: transform, opacity;
+}
+
+.gallery-preview-enter-next {
+  animation: galleryPreviewSlideNext 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gallery-preview-enter-prev {
+  animation: galleryPreviewSlidePrev 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
@@ -186,4 +221,210 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* ── Tiptap Neo-Brutalism Overrides ── */
+.tiptap-editor .ProseMirror {
+  font-family: var(--font-wenkai);
+  color: #1a1a1a;
+  line-height: 1.75;
+  outline: none;
+  min-height: 24rem;
+  padding: 1.5rem;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.tiptap-editor .ProseMirror ::selection {
+  background: #FEF9C3;
+}
+
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap-editor h1,
+.tiptap-editor h2,
+.tiptap-editor h3,
+.tiptap-editor h4 {
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: #111827;
+}
+
+.tiptap-editor h1 {
+  font-size: 1.75rem;
+  border-bottom: 2px solid #000;
+  padding-bottom: 0.3em;
+}
+
+.tiptap-editor h2 {
+  font-size: 1.5rem;
+}
+
+.tiptap-editor h3 {
+  font-size: 1.25rem;
+}
+
+.tiptap-editor p {
+  margin-bottom: 0.75em;
+}
+
+.tiptap-editor a {
+  color: #3B82F6;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tiptap-editor blockquote {
+  border-left: 4px solid #FBBF24;
+  background: #FEF9C3;
+  padding: 0.75em 1em;
+  margin: 1em 0;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+}
+
+.tiptap-editor blockquote > p {
+  margin-bottom: 0.25em;
+}
+
+.tiptap-editor blockquote > p:last-child {
+  margin-bottom: 0;
+}
+
+.tiptap-editor code {
+  background: #f3f4f6;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: #EF4444;
+  border: 1px solid #e5e7eb;
+}
+
+.tiptap-editor pre {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 1em;
+  border-radius: 12px;
+  overflow-x: auto;
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0px 0px #000;
+  margin: 1em 0;
+}
+
+.tiptap-editor pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: 0.85em;
+}
+
+.tiptap-editor ul,
+.tiptap-editor ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.75em;
+  list-style-position: outside;
+}
+
+.tiptap-editor ul {
+  list-style-type: disc;
+}
+
+.tiptap-editor ol {
+  list-style-type: decimal;
+}
+
+.tiptap-editor li {
+  margin-bottom: 0.25em;
+}
+
+.tiptap-editor li > p {
+  margin-bottom: 0.25em;
+}
+
+.tiptap-editor li > p:last-child {
+  margin-bottom: 0;
+}
+
+.tiptap-editor img {
+  max-width: 100%;
+  border-radius: 12px;
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0px 0px #000;
+  margin: 1em 0;
+}
+
+.tiptap-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0px 0px #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tiptap-editor th,
+.tiptap-editor td {
+  border: 1px solid #000;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.tiptap-editor th {
+  background: #FEF9C3;
+  font-weight: 700;
+}
+
+.tiptap-editor tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.tiptap-editor hr {
+  border: none;
+  border-top: 2px dashed #000;
+  margin: 1.5em 0;
+}
+
+.tiptap-editor .uploading {
+  color: #3B82F6;
+  font-weight: bold;
+}
+
+/* Editor toolbar active state */
+.editor-toolbar-btn[data-active="true"] {
+  background-color: #facc15;
+  color: #000;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0px 0px #000000;
+  transform: translate(1px, 1px);
+}
+
+/* Task list styles */
+.tiptap-editor ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-editor ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+
+.tiptap-editor ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 0.2em;
+}
+
+.tiptap-editor ul[data-type="taskList"] li > div {
+  flex: 1;
 }

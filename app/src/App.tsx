@@ -5,7 +5,8 @@ import BlogPost from "./pages/BlogPost";
 import Journal from "./pages/Journal";
 import Thoughts from "./pages/Thoughts";
 import GalleryPage from "./pages/GalleryPage";
-import Admin from "./pages/Admin";
+import TagIndex from "./pages/TagIndex";
+import Admin from "./pages/admin";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -18,6 +19,7 @@ export default function App() {
       <Route path="/journal" element={<Journal />} />
       <Route path="/thoughts" element={<Thoughts />} />
       <Route path="/gallery" element={<GalleryPage />} />
+      <Route path="/tags" element={<TagIndex />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/login" element={<Login />} />
       <Route path="*" element={<NotFound />} />

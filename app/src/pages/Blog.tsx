@@ -1,29 +1,77 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useState, useEffect, useMemo } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/sections/Footer";
+import TagFilter from "@/components/TagFilter";
 import { Calendar, Clock, Tag, Search } from "lucide-react";
 
+
 export default function Blog() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedTag, setSelectedTag] = useState<string | null>(
+    searchParams.get("tag")
+  );
+
+  useEffect(() => {
+    const tagFromUrl = searchParams.get("tag");
+    if (tagFromUrl !== selectedTag) {
+      setSelectedTag(tagFromUrl);
+    }
+  }, [searchParams]);
+
+  const handleTagSelect = (tag: string | null) => {
+    setSelectedTag(tag);
+    if (tag) {
+      setSearchParams({ tag });
+    } else {
+      setSearchParams({});
+    }
+  };
+
   const { data: posts, isLoading } = useQuery({
+    queryKey: ["posts", "list", { type: "blog", status: "published", tag: selectedTag }],
+    queryFn: () => api.posts.list({ type: "blog", status: "published", tag: selectedTag ?? undefined }),
+  });
+
+  // 获取当前分类全部文章（不带标签筛选），用于计算该分类下的标签统计
+  const { data: allCategoryPosts } = useQuery({
     queryKey: ["posts", "list", { type: "blog", status: "published" }],
     queryFn: () => api.posts.list({ type: "blog", status: "published" }),
   });
+
   const { data: allTags } = useQuery({
     queryKey: ["tags", "list"],
     queryFn: () => api.tags.list(),
   });
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  // 从当前分类文章中计算标签出现次数
+  const categoryTagStats = useMemo(() => {
+    if (!allCategoryPosts) return {};
+    const stats: Record<number, number> = {};
+    allCategoryPosts.forEach((post) => {
+      post.tags?.forEach((tag) => {
+        stats[tag.id] = (stats[tag.id] ?? 0) + 1;
+      });
+    });
+    return stats;
+  }, [allCategoryPosts]);
+
+  // 只保留当前分类下有文章的标签
+  const visibleTags = useMemo(() => {
+    if (!allTags) return [];
+    return allTags.filter((tag) => (categoryTagStats[tag.id] ?? 0) > 0);
+  }, [allTags, categoryTagStats]);
 
   const filteredPosts = posts?.filter((post) => {
-    const matchesSearch =
-      !search ||
+    if (!search) return true;
+    return (
       post.title.toLowerCase().includes(search.toLowerCase()) ||
-      post.content.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch;
+      post.content.toLowerCase().includes(search.toLowerCase())
+    );
   });
 
   return (
@@ -56,39 +104,13 @@ export default function Blog() {
             />
           </div>
 
-          {/* Tags */}
-          {allTags && allTags.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2 mb-10">
-              <button
-                onClick={() => setSelectedTag(null)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  !selectedTag
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                全部
-              </button>
-              {allTags.map((tag) => (
-                <button
-                  key={tag.id}
-                  onClick={() => setSelectedTag(tag.name)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    selectedTag === tag.name
-                      ? "text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                  style={
-                    selectedTag === tag.name
-                      ? { backgroundColor: tag.color }
-                      : {}
-                  }
-                >
-                  {tag.name}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Tags Filter */}
+          <TagFilter
+            tags={visibleTags}
+            stats={categoryTagStats}
+            selectedTag={selectedTag}
+            onSelect={handleTagSelect}
+          />
 
           {/* Posts */}
           {isLoading ? (
@@ -114,6 +136,34 @@ export default function Blog() {
                       </div>
                     )}
                     <div className="flex-1 space-y-3">
+                      {/* 卡片标签 */}
+                      {post.tags && post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {post.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="inline-flex items-center h-6 px-2.5 rounded-full border-2 border-black text-[11px] font-bold tracking-wide shadow-[2px_2px_0px_#000000] cursor-pointer"
+                              style={{
+                                backgroundColor: `${tag.color}26`,
+                                color: tag.color,
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                navigate(`/tags?tag=${encodeURIComponent(tag.name)}`);
+                              }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                          {post.tags.length > 3 && (
+                            <span className="inline-flex items-center h-6 px-2.5 rounded-full border-2 border-black text-[11px] font-bold tracking-wide bg-gray-100 text-gray-500 shadow-[2px_2px_0px_#000000]">
+                              +{post.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       <h2 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                         {post.title}
                       </h2>

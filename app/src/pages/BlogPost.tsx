@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/sections/Footer";
-import ReactMarkdown from "react-markdown";
+import TagBadge from "@/components/TagBadge";
+import MarkdownContent from "@/components/MarkdownContent";
 import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 
 export default function BlogPost() {
@@ -36,6 +37,11 @@ export default function BlogPost() {
     );
   }
 
+  const typeLabel =
+    post.type === "blog" ? "博文" : post.type === "journal" ? "日志" : "便签";
+  const typeColor =
+    post.type === "blog" ? "#3B82F6" : post.type === "journal" ? "#22C55E" : "#EC4899";
+
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
       <Navbar />
@@ -52,19 +58,29 @@ export default function BlogPost() {
 
           {/* Header */}
           <header className="mb-10">
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap items-center gap-2.5 mb-5">
+              {/* 类型标签 */}
+              <TagBadge
+                name={typeLabel}
+                color={typeColor}
+                variant="large"
+                state="active"
+              />
+              {/* 分隔 */}
+              {post.tags && post.tags.length > 0 && (
+                <span className="text-gray-300 text-sm mx-1">|</span>
+              )}
+              {/* 内容标签 */}
               {post.tags?.map((tag) => (
-                <span
+                <TagBadge
                   key={tag.id}
-                  className="px-3 py-1 rounded-full text-xs font-mono-type tracking-wide"
-                  style={{ backgroundColor: tag.color + "20", color: tag.color }}
-                >
-                  {tag.name}
-                </span>
+                  name={tag.name}
+                  color={tag.color}
+                  variant="large"
+                  state="inactive"
+                  href={`/tags?tag=${encodeURIComponent(tag.name)}`}
+                />
               ))}
-              <span className="px-3 py-1 rounded-full text-xs font-mono-type bg-blue-100 text-blue-700 tracking-wide">
-                {post.type === "blog" ? "博文" : post.type === "journal" ? "日志" : "随想"}
-              </span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
@@ -103,9 +119,10 @@ export default function BlogPost() {
           )}
 
           {/* Content */}
-          <div className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-blockquote:border-l-4 prose-blockquote:border-yellow-400 prose-blockquote:bg-yellow-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg">
-            <ReactMarkdown>{post.content}</ReactMarkdown>
-          </div>
+          <MarkdownContent
+            content={post.content}
+            className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-blockquote:border-l-4 prose-blockquote:border-yellow-400 prose-blockquote:bg-yellow-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg"
+          />
 
           {/* Footer */}
           <div className="mt-12 pt-8 border-t border-gray-200">

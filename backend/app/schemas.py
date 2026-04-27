@@ -30,13 +30,13 @@ class RoleResponse(CamelModel):
     permissions: List[PermissionResponse] = []
 
 
-class RoleCreate(BaseModel):
+class RoleCreate(CamelModel):
     name: str
     description: Optional[str] = None
     permission_ids: Optional[List[int]] = None
 
 
-class RoleUpdate(BaseModel):
+class RoleUpdate(CamelModel):
     name: Optional[str] = None
     description: Optional[str] = None
     permission_ids: Optional[List[int]] = None
@@ -56,19 +56,19 @@ class UserResponse(CamelModel):
     last_sign_in_at: datetime
 
 
-class RegisterRequest(BaseModel):
+class RegisterRequest(CamelModel):
     username: str
     password: str
     email: Optional[str] = None
     name: Optional[str] = None
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(CamelModel):
     username: str
     password: str
 
 
-class UserCreate(BaseModel):
+class UserCreate(CamelModel):
     username: str
     password: str
     email: Optional[str] = None
@@ -77,7 +77,7 @@ class UserCreate(BaseModel):
     role_ids: Optional[List[int]] = None
 
 
-class UserUpdate(BaseModel):
+class UserUpdate(CamelModel):
     username: Optional[str] = None
     email: Optional[str] = None
     name: Optional[str] = None
@@ -91,6 +91,7 @@ class TagResponse(CamelModel):
     id: int
     name: str
     color: str = "#3B82F6"
+    created_at: datetime
 
 
 class TagCreate(BaseModel):
@@ -119,7 +120,7 @@ class PostListParams(BaseModel):
     offset: int = 0
 
 
-class PostCreate(BaseModel):
+class PostCreate(CamelModel):
     title: str
     content: str
     type: PostType
@@ -129,7 +130,7 @@ class PostCreate(BaseModel):
     tag_ids: Optional[List[int]] = None
 
 
-class PostUpdate(BaseModel):
+class PostUpdate(CamelModel):
     title: Optional[str] = None
     content: Optional[str] = None
     type: Optional[PostType] = None
@@ -137,6 +138,17 @@ class PostUpdate(BaseModel):
     cover_image: Optional[str] = None
     status: Optional[PostStatus] = None
     tag_ids: Optional[List[int]] = None
+
+
+# ─── Album ───
+class AlbumResponse(CamelModel):
+    id: int
+    name: str
+    created_at: datetime
+
+
+class AlbumCreate(BaseModel):
+    name: str
 
 
 # ─── Image ───
@@ -184,3 +196,15 @@ class LogoutResponse(BaseModel):
 class PingResponse(BaseModel):
     ok: bool
     ts: int
+
+
+# ─── Site Config ───
+class SiteConfigResponse(CamelModel):
+    id: int
+    key: str
+    value: Optional[str] = None
+    updated_at: datetime
+
+
+class SiteConfigUpdateRequest(BaseModel):
+    configs: dict[str, Optional[str]]

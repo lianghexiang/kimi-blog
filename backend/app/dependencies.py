@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import Request, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -7,7 +8,10 @@ from app.models import User, Role
 from app.auth.session import verify_session
 
 
-async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)) -> User | None:
+async def get_current_user(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
     cookie_header = request.headers.get("cookie", "")
     token = None
     for part in cookie_header.split(";"):
@@ -32,9 +36,12 @@ async def get_current_user(request: Request, db: AsyncSession = Depends(get_db))
     return user
 
 
-def require_auth(user: User | None = Depends(get_current_user)) -> User:
+def require_auth(user: Optional[User] = Depends(get_current_user)) -> User:
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="请先登录")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="请先登录",
+        )
     return user
 
 
@@ -48,6 +55,7 @@ def require_permission(permission_name: str):
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"缺少权限: {permission_name}",
         )
+
     return checker
 
 
@@ -60,4 +68,5 @@ def require_role(role_name: str):
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"需要角色: {role_name}",
         )
+
     return checker

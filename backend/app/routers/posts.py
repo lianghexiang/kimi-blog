@@ -14,6 +14,7 @@ router = APIRouter(prefix="/posts")
 async def list_posts(
     type: Optional[str] = None,
     status: Optional[str] = None,
+    tag: Optional[str] = None,
     limit: int = 20,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
@@ -39,8 +40,13 @@ async def list_posts(
         tags = tag_result.scalars().all()
         post_responses.append(PostResponse(
             **{c.name: getattr(post, c.name) for c in post.__table__.columns},
-            tags=[{"id": t.id, "name": t.name, "color": t.color} for t in tags],
+            tags=[{"id": t.id, "name": t.name, "color": t.color, "created_at": t.created_at} for t in tags],
         ))
+
+    # Filter by tag name if provided
+    if tag:
+        post_responses = [p for p in post_responses if any(t.name == tag for t in p.tags)]
+
     return post_responses
 
 
@@ -57,7 +63,7 @@ async def get_by_slug(slug: str, db: AsyncSession = Depends(get_db)):
     tags = tag_result.scalars().all()
     return PostResponse(
         **{c.name: getattr(post, c.name) for c in post.__table__.columns},
-        tags=[{"id": t.id, "name": t.name, "color": t.color} for t in tags],
+        tags=[{"id": t.id, "name": t.name, "color": t.color, "created_at": t.created_at} for t in tags],
     )
 
 
@@ -111,7 +117,7 @@ async def update_post(id: int, data: PostUpdate, db: AsyncSession = Depends(get_
     tags = tag_result.scalars().all()
     return PostResponse(
         **{c.name: getattr(post, c.name) for c in post.__table__.columns},
-        tags=[{"id": t.id, "name": t.name, "color": t.color} for t in tags],
+        tags=[{"id": t.id, "name": t.name, "color": t.color, "created_at": t.created_at} for t in tags],
     )
 
 
