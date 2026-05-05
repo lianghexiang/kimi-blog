@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useRef } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/core";
 import {
   Bold,
@@ -19,9 +19,11 @@ import {
   Minus,
   Undo,
   Redo,
+  Smile,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import EmojiPicker from "emoji-picker-react";
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -59,7 +61,18 @@ const ToolbarButton = memo(function ToolbarButton({
 });
 
 export default function EditorToolbar({ editor }: EditorToolbarProps) {
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
+
   if (!editor) return null;
+
+  const onEmojiClick = useCallback(
+    (emojiData: { emoji: string }) => {
+      editor.chain().focus().insertContent(emojiData.emoji).run();
+      setShowEmojiPicker(false);
+    },
+    [editor]
+  );
 
   const setLink = useCallback(() => {
     const previousUrl = editor.getAttributes("link").href as string;
@@ -139,21 +152,43 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
         className="hidden"
         onChange={handleImageFileChange}
       />
-      <div className="flex flex-wrap items-center gap-2 border-b-2 border-gray-100 bg-[#FFF7D6] px-3 py-2">
-      {items.map((item, index) => (
-        <span key={item.title} className="contents">
-          {(index === 3 || index === 8 || index === 12 || index === 15) && (
-            <div className="mx-1 h-5 w-px bg-gray-300" />
-          )}
-          <ToolbarButton
-            onClick={item.action}
-            icon={item.icon}
-            title={item.title}
-            active={item.isActive()}
-            disabled={item.disabled ? item.disabled() : false}
-          />
-        </span>
-      ))}
+      <div className="relative flex flex-wrap items-center gap-2 border-b-2 border-gray-100 bg-[#FFF7D6] px-3 py-2">
+        {items.map((item, index) => (
+          <span key={item.title} className="contents">
+            {(index === 3 || index === 8 || index === 12 || index === 15) && (
+              <div className="mx-1 h-5 w-px bg-gray-300" />
+            )}
+            <ToolbarButton
+              onClick={item.action}
+              icon={item.icon}
+              title={item.title}
+              active={item.isActive()}
+              disabled={item.disabled ? item.disabled() : false}
+            />
+          </span>
+        ))}
+        <div className="mx-1 h-5 w-px bg-gray-300" />
+        <Button
+          ref={emojiBtnRef}
+          type="button"
+          variant="outline"
+          size="icon"
+          className="editor-toolbar-btn h-9 w-9 rounded-lg border-2 border-black bg-white hover:bg-gray-50"
+          onClick={() => setShowEmojiPicker((v) => !v)}
+          title="插入表情"
+        >
+          <Smile className="h-4 w-4" />
+        </Button>
+        {showEmojiPicker && (
+          <div className="absolute left-0 top-[calc(100%+8px)] z-50 neo-border neo-shadow-sm rounded-xl overflow-hidden bg-white">
+            <EmojiPicker
+              onEmojiClick={onEmojiClick}
+              width={320}
+              height={380}
+              previewConfig={{ showPreview: false }}
+            />
+          </div>
+        )}
       </div>
     </>
   );
