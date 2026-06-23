@@ -70,18 +70,18 @@ export default function About() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           ref={notebookRef}
-          className="bg-white rounded-3xl neo-border neo-shadow overflow-hidden"
+          className="bg-white rounded-3xl neo-border neo-shadow"
           style={{ transform: "rotate(-1deg)" }}
         >
           {/* Sticky notes on top */}
-          <div className="relative h-12">
+          <div className="relative h-14 pt-3">
             <div
-              className="absolute -top-3 left-8 sm:left-16 bg-yellow-400 px-4 py-2 rounded-lg neo-border neo-shadow-sm font-mono-type text-xs font-bold tracking-wider animate-float"
+              className="absolute top-3 left-8 sm:left-16 bg-yellow-400 px-4 py-2 rounded-lg neo-border neo-shadow-sm font-mono-type text-xs font-bold tracking-wider animate-float"
             >
               ON AIR
             </div>
             <div
-              className="absolute -top-2 left-32 sm:left-48 bg-blue-400 text-white px-4 py-2 rounded-lg neo-border neo-shadow-sm font-mono-type text-xs font-bold tracking-wider animate-float"
+              className="absolute top-4 left-32 sm:left-48 bg-blue-400 text-white px-4 py-2 rounded-lg neo-border neo-shadow-sm font-mono-type text-xs font-bold tracking-wider animate-float"
               style={{ animationDelay: "0.5s" }}
             >
               About Me
