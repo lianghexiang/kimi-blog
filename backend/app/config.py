@@ -25,5 +25,14 @@ class Settings(BaseSettings):
     # ── CORS (comma-separated origins) ──
     cors_origins: str = ""
 
+    # ── MinIO 对象存储 ──
+    minio_endpoint: str = "localhost:9000"
+    minio_access_key: str = ""
+    minio_secret_key: str = ""
+    minio_bucket: str = "blog-uploads"
+    minio_secure: bool = False
+    # 自定义公网访问地址，为空时自动生成 http(s)://endpoint/bucket/object
+    minio_public_url: str = ""
+
 
 settings = Settings()
