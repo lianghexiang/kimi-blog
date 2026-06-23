@@ -27,12 +27,10 @@ export default function MarkdownContent({
 
   return (
     <>
-      <ReactMarkdown
-        components={{
-          root: ({ children }) => (
-            <div className={className}>{children}</div>
-          ),
-          img: ({ src, alt }) => (
+      <div className={className}>
+        <ReactMarkdown
+          components={{
+            img: ({ src, alt }) => (
             <span
               className="group relative block my-6 cursor-zoom-in"
               onClick={() => src && openLightbox(src, alt || "")}
@@ -52,6 +50,7 @@ export default function MarkdownContent({
       >
         {content}
       </ReactMarkdown>
+      </div>
 
       <ImageLightbox
         src={lightbox?.src || ""}

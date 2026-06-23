@@ -14,6 +14,7 @@ interface TagBadgeProps {
   onClick?: () => void;
   className?: string;
   style?: React.CSSProperties;
+  as?: "button" | "span";
 }
 
 export default function TagBadge({
@@ -25,6 +26,7 @@ export default function TagBadge({
   href,
   onClick,
   className,
+  as = "button",
 }: TagBadgeProps) {
   const isActive = state === "active";
   const isDisabled = state === "disabled";
@@ -88,6 +90,20 @@ export default function TagBadge({
       >
         {content}
       </Link>
+    );
+  }
+
+  if (as === "span") {
+    return (
+      <span
+        className={cn(baseClasses, sizeClasses[variant], stateClasses, className)}
+        style={{ ...style, ...{ backgroundColor: bgColor, color: isActive ? "#ffffff" : isDisabled ? "#9ca3af" : textColor } }}
+        onClick={!isDisabled ? onClick : undefined}
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick && !isDisabled ? 0 : undefined}
+      >
+        {content}
+      </span>
     );
   }
 

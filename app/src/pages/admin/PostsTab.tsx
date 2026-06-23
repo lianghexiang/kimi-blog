@@ -220,15 +220,20 @@ export default function PostsTab() {
               placeholder="标题"
               className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
             />
-            <Input
-              type="text"
-              value={formData.slug}
-              onChange={(e) =>
-                setFormData({ ...formData, slug: e.target.value })
-              }
-              placeholder="URL 标识 (slug)"
-              className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
-            />
+            <div>
+              <Input
+                type="text"
+                value={formData.slug}
+                onChange={(e) =>
+                  setFormData({ ...formData, slug: e.target.value })
+                }
+                placeholder="URL 标识 (slug)"
+                className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500"
+              />
+              <p className="mt-1.5 text-xs text-gray-400">
+                用于生成文章链接，如: my-first-post。仅支持小写字母、数字和连字符
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     inspectAttr(), react()],
   server: {
-    port: 3050,
+    port: 3090,
     proxy: {
       "/api": {
         target: "http://localhost:3030",
@@ -20,9 +20,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "@contracts": path.resolve(__dirname, "./contracts"),
-      "@db": path.resolve(__dirname, "./db"),
-      "db": path.resolve(__dirname, "./db"),
     },
   },
   envDir: path.resolve(__dirname),

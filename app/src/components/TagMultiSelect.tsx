@@ -104,6 +104,7 @@ export default function TagMultiSelect({
                       color={tag.color}
                       variant="default"
                       state={isSelected ? "active" : "inactive"}
+                      as="span"
                     />
                     {isSelected && (
                       <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-black text-white">

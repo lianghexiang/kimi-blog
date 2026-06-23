@@ -18,7 +18,6 @@ export default function Journal() {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-    status,
   } = useInfiniteQuery({
     queryKey: ["posts", "journal", "infinite"],
     queryFn: ({ pageParam }) =>
