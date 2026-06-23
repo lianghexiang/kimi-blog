@@ -243,10 +243,14 @@ export default function ImagesTab() {
                 value={album}
                 onValueChange={(value) => setAlbum(value)}
               >
-                <SelectTrigger className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500">
+                <SelectTrigger className="flex-1 px-4 py-2 h-auto border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-0">
                   <SelectValue placeholder="选择相册分类" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent
+                  position="popper"
+                  sideOffset={4}
+                  className="rounded-xl border-2 border-gray-200"
+                >
                   {albums?.map((a) => (
                     <SelectItem key={a.id} value={a.name}>
                       {a.name}

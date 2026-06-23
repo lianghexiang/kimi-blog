@@ -5,6 +5,13 @@ import { api } from "@/lib/api";
 import { Plus, Edit3, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import TagMultiSelect from "@/components/TagMultiSelect";
 import TiptapEditor from "@/components/editor/TiptapEditor";
 
@@ -237,33 +244,49 @@ export default function PostsTab() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <select
+            <Select
               value={formData.type}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 setFormData({
                   ...formData,
-                  type: e.target.value as "blog" | "journal" | "thought",
+                  type: value as "blog" | "journal" | "thought",
                 })
               }
-              className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white"
             >
-              <option value="blog">博文</option>
-              <option value="journal">日志</option>
-              <option value="thought">便签</option>
-            </select>
-            <select
+              <SelectTrigger className="w-full px-4 py-2 h-auto border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-0 bg-white">
+                <SelectValue placeholder="选择类型" />
+              </SelectTrigger>
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="rounded-xl border-2 border-gray-200"
+              >
+                <SelectItem value="blog">博文</SelectItem>
+                <SelectItem value="journal">日志</SelectItem>
+                <SelectItem value="thought">便签</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
               value={formData.status}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 setFormData({
                   ...formData,
-                  status: e.target.value as "published" | "draft",
+                  status: value as "published" | "draft",
                 })
               }
-              className="px-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white"
             >
-              <option value="published">已发布</option>
-              <option value="draft">草稿</option>
-            </select>
+              <SelectTrigger className="w-full px-4 py-2 h-auto border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-0 bg-white">
+                <SelectValue placeholder="选择状态" />
+              </SelectTrigger>
+              <SelectContent
+                position="popper"
+                sideOffset={4}
+                className="rounded-xl border-2 border-gray-200"
+              >
+                <SelectItem value="published">已发布</SelectItem>
+                <SelectItem value="draft">草稿</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* 标签选择 */}
