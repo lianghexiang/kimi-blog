@@ -64,14 +64,6 @@ app.include_router(albums_router, prefix="/api")
 app.include_router(site_configs_router, prefix="/api")
 
 
-@app.exception_handler(404)
-async def not_found_handler(request: Request, exc):
-    if request.url.path.startswith("/api/"):
-        return JSONResponse(status_code=404, content={"error": "Not Found"})
-    # Let SPA fallback handle non-API routes
-    return JSONResponse(status_code=404, content={"error": "Not Found"})
-
-
 # Uploads static files
 import os
 
@@ -85,12 +77,17 @@ STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "app", "dist", 
 
 if os.path.isdir(STATIC_DIR):
     from fastapi.staticfiles import StaticFiles
-    app.mount("/", StaticFiles(directory=STATIC_DIR), name="static")
+    app.mount("/assets", StaticFiles(directory=os.path.join(STATIC_DIR, "assets")), name="assets")
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         if full_path.startswith("api/"):
             return JSONResponse(status_code=404, content={"error": "Not Found"})
+        # Try to serve static file first
+        file_path = os.path.join(STATIC_DIR, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        # Fallback to index.html for SPA routing
         index_path = os.path.join(STATIC_DIR, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)

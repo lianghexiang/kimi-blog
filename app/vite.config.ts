@@ -9,10 +9,10 @@ export default defineConfig({
   plugins: [
     inspectAttr(), react()],
   server: {
-    port: 5000,
+    port: 3050,
     proxy: {
       "/api": {
-        target: "http://localhost:8000",
+        target: "http://localhost:3030",
         changeOrigin: true,
       },
     },

@@ -44,8 +44,8 @@ RUN mkdir -p /app/app/public/uploads
 WORKDIR /app/backend
 
 ENV PYTHONPATH=/app/backend
-ENV PORT=3000
+ENV PORT=5000
 
-EXPOSE 3000
+EXPOSE 5000
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
