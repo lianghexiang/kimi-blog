@@ -46,6 +46,15 @@
 
   html {
     scroll-behavior: smooth;
+    /* 防止滚动条出现/消失时页面内容跳动 */
+    overflow-y: scroll;
+  }
+
+  @supports (scrollbar-gutter: stable) {
+    html {
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+    }
   }
 }
 
