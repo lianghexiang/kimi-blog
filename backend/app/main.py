@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -63,14 +64,6 @@ app.include_router(roles_router, prefix="/api")
 app.include_router(albums_router, prefix="/api")
 app.include_router(site_configs_router, prefix="/api")
 
-
-# Uploads static files
-import os
-
-UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "app", "public", "uploads")
-if os.path.isdir(UPLOADS_DIR):
-    from fastapi.staticfiles import StaticFiles
-    app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 # SPA fallback — mount static files and catch-all
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "app", "dist", "public")

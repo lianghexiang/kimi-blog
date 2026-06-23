@@ -33,6 +33,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     environment:
       APP_ID: ${APP_ID:-}
       APP_SECRET: ${APP_SECRET:-}
@@ -45,16 +47,43 @@ services:
       PORT: 5000
       # CORS_ORIGINS: comma-separated list, e.g. https://your-domain.com
       CORS_ORIGINS: ${CORS_ORIGINS:-}
+      # MinIO 对象存储（在容器网络内通过服务名 minio 访问）
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-blog-uploads}
+      MINIO_SECURE: ${MINIO_SECURE:-false}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-}
     ports:
       - "3030:5000"
+    networks:
+      - kimiblog-net
+
+  minio:
+    image: minio/minio:RELEASE.2025-02-03T21-03-04Z
+    container_name: kimiblog-minio
+    restart: unless-stopped
+    command: ["server", "/data", "--address", ":9000", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
     volumes:
-      - uploads_data:/app/app/public/uploads
+      - minio_data:/data
+    ports:
+      - "9005:9000"
+      - "9006:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - kimiblog-net
 
 volumes:
   db_data:
-  uploads_data:
+  minio_data:
 
 networks:
   kimiblog-net:

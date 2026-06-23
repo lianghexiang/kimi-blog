@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
@@ -43,6 +43,7 @@ export default function ImagesTab() {
   const [album, setAlbum] = useState("");
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({});
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -140,6 +141,25 @@ export default function ImagesTab() {
     e.stopPropagation();
     setIsDragging(false);
   };
+
+  // 生成/释放图片预览 URL
+  useEffect(() => {
+    const urls: Record<string, string> = {};
+    selectedFiles.forEach((file) => {
+      const key = `${file.name}-${file.size}-${file.lastModified}`;
+      if (!previewUrls[key]) {
+        urls[key] = URL.createObjectURL(file);
+      }
+    });
+
+    if (Object.keys(urls).length > 0) {
+      setPreviewUrls((prev) => ({ ...prev, ...urls }));
+    }
+
+    return () => {
+      Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [selectedFiles]);
 
   const removeFile = (index: number) => {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
@@ -331,29 +351,45 @@ export default function ImagesTab() {
                 已选择 {selectedFiles.length} 个文件
               </p>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {selectedFiles.map((file, idx) => (
-                  <div
-                    key={`${file.name}-${idx}`}
-                    className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <ImageIcon className="w-4 h-4 text-gray-400 shrink-0" />
-                      <span className="text-sm text-gray-700 truncate">
-                        {file.name}
-                      </span>
-                      <span className="text-xs text-gray-400 shrink-0">
-                        ({(file.size / 1024).toFixed(1)} KB)
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(idx)}
-                      className="p-1 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                {selectedFiles.map((file, idx) => {
+                  const key = `${file.name}-${file.size}-${file.lastModified}`;
+                  const previewUrl = previewUrls[key];
+                  return (
+                    <div
+                      key={`${file.name}-${idx}`}
+                      className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
                     >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-3 min-w-0">
+                        {previewUrl ? (
+                          <img
+                            src={previewUrl}
+                            alt={file.name}
+                            className="w-12 h-12 object-cover rounded-lg border border-gray-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-lg border border-gray-200 shrink-0">
+                            <ImageIcon className="w-5 h-5 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm text-gray-700 truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            ({(file.size / 1024).toFixed(1)} KB)
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(idx)}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
