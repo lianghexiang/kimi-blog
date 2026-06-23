@@ -120,36 +120,6 @@
   }
 }
 
-/* Custom cursor */
-.custom-cursor {
-  pointer-events: none;
-  position: fixed;
-  width: 20px;
-  height: 20px;
-  background: #3B82F6;
-  border-radius: 50%;
-  z-index: 9999;
-  mix-blend-mode: difference;
-  transition: width 0.3s ease, height 0.3s ease, background 0.3s ease;
-  transform: translate(-50%, -50%);
-}
-
-.custom-cursor.hover {
-  width: 40px;
-  height: 40px;
-  background: #FBBF24;
-}
-
-/* Hide default cursor on desktop */
-@media (min-width: 768px) {
-  .cursor-none {
-    cursor: none !important;
-  }
-  .cursor-none * {
-    cursor: none !important;
-  }
-}
-
 /* Typing cursor blink */
 @keyframes blink {
   0%, 100% { opacity: 1; }
