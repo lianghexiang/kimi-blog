@@ -208,3 +208,33 @@ class SiteConfigResponse(CamelModel):
 
 class SiteConfigUpdateRequest(BaseModel):
     configs: dict[str, Optional[str]]
+
+
+# ─── About Carousel ───
+class AboutCarouselResponse(CamelModel):
+    id: int
+    image_url: str
+    caption: Optional[str] = None
+    sort_order: int
+    created_at: datetime
+
+
+class AboutCarouselCreate(CamelModel):
+    image_url: str
+    caption: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class AboutCarouselUpdate(CamelModel):
+    image_url: Optional[str] = None
+    caption: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class AboutCarouselReorderItem(CamelModel):
+    id: int
+    sort_order: int
+
+
+class AboutCarouselReorderRequest(BaseModel):
+    items: List[AboutCarouselReorderItem]

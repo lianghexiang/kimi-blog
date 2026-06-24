@@ -2,7 +2,7 @@ import type { PostUpdateInput } from "@/types/api";
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Plus, Edit3, Trash2, Upload } from "lucide-react";
+import { Plus, Edit3, Trash2, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,6 +42,7 @@ export default function PostsTab() {
     tagIds: [] as number[],
   });
   const [isDraggingDoc, setIsDraggingDoc] = useState(false);
+  const [loadingPostId, setLoadingPostId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: posts } = useQuery({
@@ -117,18 +118,24 @@ export default function PostsTab() {
     }
   };
 
-  const startEdit = (post: NonNullable<typeof posts>[0]) => {
-    setFormData({
-      title: post.title,
-      content: post.content,
-      type: post.type as "blog" | "journal" | "thought",
-      slug: post.slug,
-      status: post.status as "published" | "draft",
-      tagIds: post.tags?.map((t) => t.id) ?? [],
-    });
-    setEditingId(post.id);
-    setShowForm(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const startEdit = async (post: NonNullable<typeof posts>[0]) => {
+    setLoadingPostId(post.id);
+    try {
+      const fullPost = await api.posts.getBySlug(post.slug);
+      setFormData({
+        title: fullPost.title,
+        content: fullPost.content,
+        type: fullPost.type as "blog" | "journal" | "thought",
+        slug: fullPost.slug,
+        status: fullPost.status as "published" | "draft",
+        tagIds: fullPost.tags?.map((t) => t.id) ?? [],
+      });
+      setEditingId(post.id);
+      setShowForm(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setLoadingPostId(null);
+    }
   };
 
   const handleDocImport = useCallback(
@@ -426,9 +433,14 @@ export default function PostsTab() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => startEdit(post)}
-                className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                disabled={loadingPostId === post.id}
+                className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
               >
-                <Edit3 className="w-4 h-4" />
+                {loadingPostId === post.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Edit3 className="w-4 h-4" />
+                )}
               </button>
               <button
                 onClick={() => {

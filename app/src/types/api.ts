@@ -168,3 +168,28 @@ export type SiteConfig = {
   value: string | null;
   updatedAt: string;
 };
+
+export type AboutCarousel = {
+  id: number;
+  imageUrl: string;
+  caption: string | null;
+  sortOrder: number;
+  createdAt: string;
+};
+
+export type AboutCarouselCreateInput = {
+  imageUrl: string;
+  caption?: string;
+  sortOrder?: number;
+};
+
+export type AboutCarouselUpdateInput = {
+  imageUrl?: string;
+  caption?: string;
+  sortOrder?: number;
+};
+
+export type AboutCarouselReorderInput = {
+  id: number;
+  sortOrder: number;
+};

@@ -12,6 +12,7 @@ from app.routers.users import router as users_router
 from app.routers.roles import router as roles_router
 from app.routers.albums import router as albums_router
 from app.routers.site_configs import router as site_configs_router
+from app.routers.about_carousel import router as about_carousel_router
 from app.schemas import PingResponse
 
 
@@ -63,6 +64,7 @@ app.include_router(users_router, prefix="/api")
 app.include_router(roles_router, prefix="/api")
 app.include_router(albums_router, prefix="/api")
 app.include_router(site_configs_router, prefix="/api")
+app.include_router(about_carousel_router, prefix="/api")
 
 
 # SPA fallback — mount static files and catch-all

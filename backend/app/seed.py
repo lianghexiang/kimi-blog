@@ -25,6 +25,9 @@ DEFAULT_PERMISSIONS = [
     {"name": "tags:create", "resource": "tags", "action": "create", "description": "创建标签"},
     {"name": "contacts:read", "resource": "contacts", "action": "read", "description": "查看留言"},
     {"name": "site_configs:update", "resource": "site_configs", "action": "update", "description": "更新站点配置"},
+    {"name": "about_carousel:create", "resource": "about_carousel", "action": "create", "description": "添加关于页轮播图"},
+    {"name": "about_carousel:update", "resource": "about_carousel", "action": "update", "description": "编辑关于页轮播图"},
+    {"name": "about_carousel:delete", "resource": "about_carousel", "action": "delete", "description": "删除关于页轮播图"},
 ]
 
 DEFAULT_ROLES = [

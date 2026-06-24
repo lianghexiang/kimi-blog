@@ -142,3 +142,13 @@ class SiteConfig(Base):
     key = Column(String(100), unique=True, nullable=False)
     value = Column(Text, nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class AboutCarousel(Base):
+    __tablename__ = "about_carousel"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    image_url = Column("image_url", String(500), nullable=False)
+    caption = Column(String(255), nullable=True)
+    sort_order = Column("sort_order", Integer, default=0, nullable=False)
+    created_at = Column("created_at", DateTime(timezone=True), server_default=func.now(), nullable=False)

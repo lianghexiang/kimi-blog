@@ -20,6 +20,10 @@ import type {
   RoleUpdateInput,
   Permission,
   SiteConfig,
+  AboutCarousel,
+  AboutCarouselCreateInput,
+  AboutCarouselUpdateInput,
+  AboutCarouselReorderInput,
 } from "@/types/api";
 
 const API_BASE = "/api";
@@ -138,5 +142,18 @@ export const api = {
     list: () => apiFetch<SiteConfig[]>("/site-configs"),
     update: (data: Record<string, string | null>) =>
       apiFetch<SiteConfig[]>("/site-configs", { method: "PUT", body: JSON.stringify({ configs: data }) }),
+  },
+
+  aboutCarousel: {
+    list: () => apiFetch<AboutCarousel[]>("/about-carousel"),
+    create: (data: AboutCarouselCreateInput) =>
+      apiFetch<AboutCarousel>("/about-carousel", { method: "POST", body: JSON.stringify(data) }),
+    upload: (formData: FormData) =>
+      apiFetch<AboutCarousel>("/about-carousel/upload", { method: "POST", body: formData }),
+    update: (id: number, data: AboutCarouselUpdateInput) =>
+      apiFetch<AboutCarousel>(`/about-carousel/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: number) => apiFetch<{ success: true }>(`/about-carousel/${id}`, { method: "DELETE" }),
+    reorder: (items: AboutCarouselReorderInput[]) =>
+      apiFetch<AboutCarousel[]>("/about-carousel/reorder", { method: "PUT", body: JSON.stringify({ items }) }),
   },
 };

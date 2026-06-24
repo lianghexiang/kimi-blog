@@ -13,6 +13,7 @@ import {
   Shield,
   Key,
   Settings,
+  Images,
 } from "lucide-react";
 import PostsTab from "./PostsTab";
 import ImagesTab from "./ImagesTab";
@@ -22,6 +23,7 @@ import UsersTab from "./UsersTab";
 import RolesTab from "./RolesTab";
 import PermissionsTab from "./PermissionsTab";
 import SettingsTab from "./SettingsTab";
+import AboutCarouselTab from "./AboutCarouselTab";
 
 type Tab =
   | "posts"
@@ -31,7 +33,8 @@ type Tab =
   | "users"
   | "roles"
   | "permissions"
-  | "settings";
+  | "settings"
+  | "aboutCarousel";
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "posts", label: "文章管理", icon: <FileText className="w-4 h-4" /> },
@@ -42,6 +45,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "permissions", label: "权限管理", icon: <Key className="w-4 h-4" /> },
   { id: "contacts", label: "留言管理", icon: <Mail className="w-4 h-4" /> },
   { id: "settings", label: "站点配置", icon: <Settings className="w-4 h-4" /> },
+  { id: "aboutCarousel", label: "关于页轮播", icon: <Images className="w-4 h-4" /> },
 ];
 
 export default function Admin() {
@@ -143,6 +147,7 @@ export default function Admin() {
           {activeTab === "roles" && <RolesTab />}
           {activeTab === "permissions" && <PermissionsTab />}
           {activeTab === "settings" && <SettingsTab />}
+          {activeTab === "aboutCarousel" && <AboutCarouselTab />}
         </div>
       </main>
     </div>

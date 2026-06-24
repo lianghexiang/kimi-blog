@@ -1,19 +1,32 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { api } from "@/lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const DEFAULT_IMAGE = "/bg-desk.jpg";
 
 export default function About() {
   const sectionRef = useRef<HTMLElement>(null);
   const notebookRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const { data: carouselItems } = useQuery({
+    queryKey: ["about-carousel"],
+    queryFn: () => api.aboutCarousel.list(),
+  });
+
+  const images = carouselItems && carouselItems.length > 0
+    ? carouselItems.map((item) => item.imageUrl)
+    : [DEFAULT_IMAGE];
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Notebook parallax and rotation
       gsap.fromTo(
         notebookRef.current,
         { y: 100, rotation: -3, opacity: 0 },
@@ -32,7 +45,6 @@ export default function About() {
         }
       );
 
-      // Text content fade in
       gsap.fromTo(
         textRef.current,
         { y: 50, opacity: 0 },
@@ -53,20 +65,30 @@ export default function About() {
     return () => ctx.revert();
   }, []);
 
+  const goToPrev = () => {
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") goToPrev();
+      if (e.key === "ArrowRight") goToNext();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [images.length]);
+
+  const hasCarousel = carouselItems && carouselItems.length > 0;
+
   return (
     <section
       ref={sectionRef}
-      className="relative py-24 overflow-hidden"
-      style={{
-        backgroundImage: "url(/bg-desk.jpg)",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed",
-      }}
+      className="relative py-24 overflow-hidden bg-[#FEF9E7]"
     >
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/30" />
-
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
           ref={notebookRef}
@@ -75,9 +97,7 @@ export default function About() {
         >
           {/* Sticky notes on top */}
           <div className="relative h-14 pt-3">
-            <div
-              className="absolute top-3 left-8 sm:left-16 bg-yellow-400 px-4 py-2 rounded-lg neo-border neo-shadow-sm font-mono-type text-xs font-bold tracking-wider animate-float"
-            >
+            <div className="absolute top-3 left-8 sm:left-16 bg-yellow-400 px-4 py-2 rounded-lg neo-border neo-shadow-sm font-mono-type text-xs font-bold tracking-wider animate-float">
               ON AIR
             </div>
             <div
@@ -119,26 +139,67 @@ export default function About() {
               </div>
             </div>
 
-            {/* Photo Card */}
+            {/* Photo Carousel */}
             <div className="flex items-center justify-center">
-              <div className="relative">
+              <div className="relative w-full max-w-xs">
                 <div className="bg-white p-3 rounded-2xl neo-border neo-shadow-sm rotate-3 hover:rotate-0 transition-transform duration-500">
-                  <div className="w-full max-w-xs aspect-[3/4] rounded-xl overflow-hidden bg-gray-100">
-                    <img
-                      src="/bg-desk.jpg"
-                      alt="生活记录"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-gray-100">
+                    {images.map((src, idx) => (
+                      <img
+                        key={`${src}-${idx}`}
+                        src={src}
+                        alt="生活记录"
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+                          idx === currentIndex ? "opacity-100" : "opacity-0"
+                        }`}
+                      />
+                    ))}
                   </div>
                   <p className="mt-3 text-center text-sm text-gray-500 font-mono-type">
                     #生活碎片 #记录日常
                   </p>
                 </div>
+
                 {/* Tape decoration */}
                 <div
                   className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-yellow-200/80 rounded-sm"
                   style={{ transform: "translateX(-50%) rotate(-2deg)" }}
                 />
+
+                {/* Carousel controls */}
+                {hasCarousel && images.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={goToPrev}
+                      className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 w-8 h-8 flex items-center justify-center bg-white rounded-full neo-border neo-shadow-sm hover:bg-yellow-50 transition-colors"
+                      aria-label="上一张"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={goToNext}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 w-8 h-8 flex items-center justify-center bg-white rounded-full neo-border neo-shadow-sm hover:bg-yellow-50 transition-colors"
+                      aria-label="下一张"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <div className="flex justify-center gap-1.5 mt-4">
+                      {images.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setCurrentIndex(idx)}
+                          className={`w-2 h-2 rounded-full transition-colors ${
+                            idx === currentIndex ? "bg-blue-500" : "bg-gray-300"
+                          }`}
+                          aria-label={`切换到第 ${idx + 1} 张`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
