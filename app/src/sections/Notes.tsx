@@ -126,7 +126,7 @@ export default function Notes() {
           {noteCards.map((note) => (
             <div
               key={note.id}
-              className={`note-card ${note.bg} p-5 rounded-2xl neo-border neo-shadow-sm transition-transform hover:-translate-y-1 hover:shadow-lg`}
+              className={`note-card note-card-hover ${note.bg} p-5 rounded-2xl neo-border neo-shadow-sm`}
               style={{ transform: `rotate(${note.rotation})` }}
             >
               <div className="flex items-center gap-2 mb-3 text-gray-800 font-semibold">

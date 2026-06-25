@@ -103,7 +103,7 @@ export default function Thoughts() {
                 <Link
                   key={thought.id}
                   to={`/blog/${thought.slug}`}
-                  className={`block rounded-2xl p-6 neo-border neo-shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all group ${
+                  className={`block rounded-2xl p-6 neo-border neo-shadow-sm note-card-hover transition-colors group ${
                     idx % 3 === 0
                       ? "bg-yellow-50"
                       : idx % 3 === 1

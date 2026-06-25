@@ -25,8 +25,8 @@
     --ring: 217 91% 60%;
     --radius: 0.625rem;
 
-    --font-wenkai: 'LXGW WenKai', serif;
-    --font-caveat: 'Caveat', cursive;
+    --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-display: 'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif;
     --font-mono: 'Space Mono', monospace;
   }
 
@@ -36,11 +36,11 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-wenkai);
+    font-family: var(--font-body);
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-wenkai);
+    font-family: var(--font-display);
     word-break: keep-all;
   }
 
@@ -60,11 +60,11 @@
 
 @layer components {
   .font-display {
-    font-family: var(--font-wenkai);
+    font-family: var(--font-display);
   }
 
   .font-handwrite {
-    font-family: var(--font-caveat);
+    font-family: var(--font-display);
   }
 
   .font-mono-type {
@@ -149,6 +149,16 @@
   animation: float 3s ease-in-out infinite;
 }
 
+/* 便签卡片悬浮时触发浮动动画 */
+.note-card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.note-card-hover:hover {
+  animation: float 2.5s ease-in-out infinite;
+  box-shadow: 6px 6px 0px 0px #000000;
+}
+
 @keyframes galleryPreviewSlideNext {
   0% {
     opacity: 0;
@@ -204,7 +214,7 @@
 
 /* ── Tiptap Neo-Brutalism Overrides ── */
 .tiptap-editor .ProseMirror {
-  font-family: var(--font-wenkai);
+  font-family: var(--font-body);
   color: #1a1a1a;
   line-height: 1.75;
   outline: none;
