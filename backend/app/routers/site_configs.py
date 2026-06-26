@@ -18,6 +18,11 @@ DEFAULT_CONFIGS: dict[str, Optional[str]] = {
     "hero_button_text": "开始逛逛",
     "hero_avatar_url": "/avatar-girl.png",
     "hero_bg_image_url": None,
+    "hero_title_prefix_color": "#3B82F6",
+    "hero_title_suffix_color": "#111827",
+    "hero_subtitle_color": "#4B5563",
+    "hero_badge_color": "#1D4ED8",
+    "hero_font_family": "",
 }
 
 

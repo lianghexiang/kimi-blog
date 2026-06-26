@@ -29,6 +29,11 @@ function useSiteConfig() {
     buttonText: map["hero_button_text"] || "开始逛逛",
     avatarUrl: map["hero_avatar_url"] || "/avatar-girl.png",
     bgImageUrl: map["hero_bg_image_url"] || "",
+    titlePrefixColor: map["hero_title_prefix_color"] || "#3B82F6",
+    titleSuffixColor: map["hero_title_suffix_color"] || "#111827",
+    subtitleColor: map["hero_subtitle_color"] || "#4B5563",
+    badgeColor: map["hero_badge_color"] || "#1D4ED8",
+    fontFamily: map["hero_font_family"] || "",
   };
 }
 
@@ -102,6 +107,10 @@ export default function Hero() {
       }
     : {};
 
+  const textStyle: React.CSSProperties = config.fontFamily
+    ? { fontFamily: config.fontFamily }
+    : {};
+
   return (
     <section
       ref={sectionRef}
@@ -119,7 +128,7 @@ export default function Hero() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
           {/* Text Content - 60% */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-mono-type tracking-wide">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-mono-type tracking-wide" style={{ color: config.badgeColor }}>
               <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
               {config.badgeText}
             </div>
@@ -127,19 +136,20 @@ export default function Hero() {
             <h1
               ref={titleRef}
               className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight tracking-tight"
-              style={{ transform: "rotate(-1deg)" }}
+              style={{ transform: "rotate(-1deg)", ...textStyle }}
             >
-              <span className="font-handwrite text-6xl sm:text-7xl lg:text-8xl text-blue-500">
+              <span className="font-handwrite text-6xl sm:text-7xl lg:text-8xl" style={{ color: config.titlePrefixColor }}>
                 {config.titlePrefix}
               </span>
               <br />
-              <span className="text-gray-900">{config.titleSuffix}</span>
+              <span style={{ color: config.titleSuffixColor }}>{config.titleSuffix}</span>
               <span className="inline-block ml-2 animate-bounce">👋</span>
             </h1>
 
             <p
               ref={subtitleRef}
-              className="text-lg sm:text-xl text-gray-600 max-w-lg leading-relaxed"
+              className="text-lg sm:text-xl max-w-lg leading-relaxed"
+              style={{ color: config.subtitleColor, ...textStyle }}
             >
               {config.subtitle}
             </p>
