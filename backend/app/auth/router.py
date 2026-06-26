@@ -15,12 +15,13 @@ router = APIRouter(prefix="/auth")
 
 def get_cookie_opts(request: Request):
     is_local = request.url.hostname in ("localhost", "127.0.0.1")
+    is_https = request.url.scheme == "https"
     return {
         "httponly": True,
         "path": "/",
         "max_age": 365 * 24 * 60 * 60,
-        "secure": not is_local,
-        "samesite": "Lax" if is_local else "None",
+        "secure": is_https,
+        "samesite": "Lax",
     }
 
 
