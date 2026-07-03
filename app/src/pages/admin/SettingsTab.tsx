@@ -49,6 +49,12 @@ const CONFIG_FIELDS: ConfigField[] = [
   { key: "hero_avatar_url", label: "头像图片 URL", placeholder: "/avatar-girl.png", type: "text" },
   { key: "hero_bg_image_url", label: "背景图片 URL", placeholder: "留空则使用默认背景色", type: "text" },
   { key: "hero_font_family", label: "字体（留空使用默认）", placeholder: '如："ZCOOL KuaiLe", "Noto Sans SC"', type: "text" },
+  {
+    key: "music_playlist",
+    label: "音乐播放列表 (JSON)",
+    placeholder: '{"enabled":true,"tracks":[{"id":"1","title":"歌曲名","artist":"艺术家","url":"https://..."}]}',
+    type: "textarea",
+  },
 ];
 
 const PRESET_COLORS = [

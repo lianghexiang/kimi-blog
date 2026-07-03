@@ -1,0 +1,35 @@
+{
+  "enabled": true,
+  "autoplay": false,
+  "loopMode": "all",
+  "tracks": [
+    {
+      "id": "1",
+      "title": "光るなら",
+      "artist": "Goose house",
+      "url": "https://moeplayer.b0.upaiyun.com/aplayer/hikarunara.mp3",
+      "cover": "https://moeplayer.b0.upaiyun.com/aplayer/hikarunara.jpg"
+    },
+    {
+      "id": "2",
+      "title": "カノン",
+      "artist": "Pachelbel",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "cover": "https://picsum.photos/seed/music1/300/300"
+    },
+    {
+      "id": "3",
+      "title": "夏日微风",
+      "artist": "AudioNautix",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      "cover": "https://picsum.photos/seed/music2/300/300"
+    },
+    {
+      "id": "4",
+      "title": "星空漫步",
+      "artist": "SoundHelix",
+      "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+      "cover": "https://picsum.photos/seed/music3/300/300"
+    }
+  ]
+}

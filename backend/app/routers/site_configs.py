@@ -23,6 +23,7 @@ DEFAULT_CONFIGS: dict[str, Optional[str]] = {
     "hero_subtitle_color": "#4B5563",
     "hero_badge_color": "#1D4ED8",
     "hero_font_family": "",
+    "music_playlist": '{"enabled":false,"tracks":[]}',
 }
 
 
