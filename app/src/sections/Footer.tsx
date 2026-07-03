@@ -31,16 +31,6 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Big Banner */}
-        <div className="mb-12 overflow-hidden">
-          <h2
-            className="font-handwrite text-5xl sm:text-7xl text-yellow-400 text-center"
-            style={{ transform: "rotate(-3deg)" }}
-          >
-            Stay Connected!
-          </h2>
-        </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Newsletter */}
           <div className="space-y-6">
