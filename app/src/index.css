@@ -25,9 +25,9 @@
     --ring: 217 91% 60%;
     --radius: 0.625rem;
 
-    --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    --font-display: 'ZCOOL KuaiLe', 'Noto Sans SC', sans-serif;
-    --font-mono: 'Space Mono', monospace;
+    --font-wenkai: "LXGW WenKai", serif;
+    --font-caveat: "Caveat", cursive;
+    --font-mono: "Space Mono", monospace;
   }
 
   * {
@@ -39,15 +39,31 @@
     font-family: var(--font-body);
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-wenkai);
     word-break: keep-all;
   }
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 10rem;
     /* 防止滚动条出现/消失时页面内容跳动 */
     overflow-y: scroll;
+  }
+
+  /* 确保文章标题锚点不被固定导航栏遮挡 */
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    scroll-margin-top: 10rem;
   }
 
   @supports (scrollbar-gutter: stable) {
@@ -84,7 +100,7 @@
   }
 
   .text-gradient-warm {
-    background: linear-gradient(135deg, #FBBF24 0%, #F472B6 50%, #3B82F6 100%);
+    background: linear-gradient(135deg, #fbbf24 0%, #f472b6 50%, #3b82f6 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -118,7 +134,7 @@
   }
 
   .gallery-card-back {
-    background-color: #FBBF24;
+    background-color: #fbbf24;
     color: #000;
     transform: rotateY(180deg);
     display: flex;
@@ -131,8 +147,13 @@
 
 /* Typing cursor blink */
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .typing-cursor {
@@ -141,8 +162,13 @@
 
 /* Float animation */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .animate-float {
@@ -225,7 +251,7 @@
 }
 
 .tiptap-editor .ProseMirror ::selection {
-  background: #FEF9C3;
+  background: #fef9c3;
 }
 
 .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
@@ -265,14 +291,14 @@
 }
 
 .tiptap-editor a {
-  color: #3B82F6;
+  color: #3b82f6;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .tiptap-editor blockquote {
-  border-left: 4px solid #FBBF24;
-  background: #FEF9C3;
+  border-left: 4px solid #fbbf24;
+  background: #fef9c3;
   padding: 0.75em 1em;
   margin: 1em 0;
   border-radius: 0 8px 8px 0;
@@ -293,7 +319,7 @@
   border-radius: 4px;
   font-family: var(--font-mono);
   font-size: 0.9em;
-  color: #EF4444;
+  color: #ef4444;
   border: 1px solid #e5e7eb;
 }
 
@@ -369,7 +395,7 @@
 }
 
 .tiptap-editor th {
-  background: #FEF9C3;
+  background: #fef9c3;
   font-weight: 700;
 }
 
@@ -384,7 +410,7 @@
 }
 
 .tiptap-editor .uploading {
-  color: #3B82F6;
+  color: #3b82f6;
   font-weight: bold;
 }
 

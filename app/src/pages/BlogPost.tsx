@@ -1,20 +1,63 @@
-import { useParams, Link, useNavigate } from "react-router";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useParams, Link, useNavigate, useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { TocItem } from "@/lib/toc";
+import { useActiveHeading } from "@/hooks/useActiveHeading";
 import Navbar from "@/components/Navbar";
 import Footer from "@/sections/Footer";
 import TagBadge from "@/components/TagBadge";
 import MarkdownContent from "@/components/MarkdownContent";
+import TableOfContents from "@/components/TableOfContents";
 import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: post, isLoading } = useQuery({
     queryKey: ["posts", "slug", slug],
     queryFn: () => api.posts.getBySlug(slug!),
     enabled: !!slug,
   });
+
+  const [tocItems, setTocItems] = useState<TocItem[]>([]);
+  const tocIds = tocItems.map(item => item.id);
+  const { activeId, beginClickScroll } = useActiveHeading(tocIds);
+
+  // 从 MarkdownContent DOM 提取 headings 后更新 TOC
+  const handleHeadingsExtracted = useCallback(
+    (headings: { id: string; level: number; text: string }[]) => {
+      setTocItems(prev => {
+        if (
+          prev.length === headings.length &&
+          prev.every((h, i) => h.id === headings[i].id)
+        ) {
+          return prev;
+        }
+        return headings as TocItem[];
+      });
+    },
+    []
+  );
+
+  // 初始加载时，如果有 hash 则滚动到对应标题
+  const initialScrollDoneRef = useRef(false);
+  useEffect(() => {
+    if (
+      !location.hash ||
+      isLoading ||
+      tocItems.length === 0 ||
+      initialScrollDoneRef.current
+    )
+      return;
+    const id = decodeURIComponent(location.hash.slice(1));
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      initialScrollDoneRef.current = true;
+    }
+  }, [location.hash, isLoading, tocItems.length]);
 
   if (isLoading) {
     return (
@@ -40,106 +83,122 @@ export default function BlogPost() {
   const typeLabel =
     post.type === "blog" ? "博文" : post.type === "journal" ? "日志" : "便签";
   const typeColor =
-    post.type === "blog" ? "#3B82F6" : post.type === "journal" ? "#22C55E" : "#EC4899";
+    post.type === "blog"
+      ? "#3B82F6"
+      : post.type === "journal"
+        ? "#22C55E"
+        : "#EC4899";
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
       <Navbar />
       <main className="pt-24 pb-16">
-        <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-8 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            返回
-          </button>
-
-          {/* Header */}
-          <header className="mb-10">
-            <div className="flex flex-wrap items-center gap-2.5 mb-5">
-              {/* 类型标签 */}
-              <TagBadge
-                name={typeLabel}
-                color={typeColor}
-                variant="large"
-                state="active"
-              />
-              {/* 分隔 */}
-              {post.tags && post.tags.length > 0 && (
-                <span className="text-gray-300 text-sm mx-1">|</span>
-              )}
-              {/* 内容标签 */}
-              {post.tags?.map((tag) => (
-                <TagBadge
-                  key={tag.id}
-                  name={tag.name}
-                  color={tag.color}
-                  variant="large"
-                  state="inactive"
-                  href={`/tags?tag=${encodeURIComponent(tag.name)}`}
-                />
-              ))}
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-              {post.title}
-            </h1>
-
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 font-mono-type">
-              <span className="flex items-center gap-1">
-                <User className="w-4 h-4" />
-                小桃
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                {new Date(post.createdAt).toLocaleDateString("zh-CN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                {Math.ceil(post.content.length / 300)} 分钟阅读
-              </span>
-            </div>
-          </header>
-
-          {/* Cover Image */}
-          {post.coverImage && (
-            <div className="mb-10">
-              <img
-                src={post.coverImage}
-                alt={post.title}
-                className="w-full h-64 sm:h-80 object-cover rounded-2xl neo-border"
-              />
-            </div>
-          )}
-
-          {/* Content */}
-          <MarkdownContent
-            content={post.content}
-            className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-blockquote:border-l-4 prose-blockquote:border-yellow-400 prose-blockquote:bg-yellow-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg"
-          />
-
-          {/* Footer */}
-          <div className="mt-12 pt-8 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-400">
-                最后更新：{new Date(post.updatedAt).toLocaleDateString("zh-CN")}
-              </span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row-reverse gap-8 lg:gap-12">
+            <article className="flex-1 min-w-0 max-w-3xl">
+              {/* Back Button */}
               <button
                 onClick={() => navigate(-1)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black text-sm font-medium rounded-xl neo-border neo-shadow-sm hover:-translate-y-0.5 transition-all"
+                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 mb-8 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                返回列表
+                返回
               </button>
-            </div>
+
+              {/* Header */}
+              <header className="mb-10">
+                <div className="flex flex-wrap items-center gap-2.5 mb-5">
+                  {/* 类型标签 */}
+                  <TagBadge
+                    name={typeLabel}
+                    color={typeColor}
+                    variant="large"
+                    state="active"
+                  />
+                  {/* 分隔 */}
+                  {post.tags && post.tags.length > 0 && (
+                    <span className="text-gray-300 text-sm mx-1">|</span>
+                  )}
+                  {/* 内容标签 */}
+                  {post.tags?.map(tag => (
+                    <TagBadge
+                      key={tag.id}
+                      name={tag.name}
+                      color={tag.color}
+                      variant="large"
+                      state="inactive"
+                      href={`/tags?tag=${encodeURIComponent(tag.name)}`}
+                    />
+                  ))}
+                </div>
+
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                  {post.title}
+                </h1>
+
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 font-mono-type">
+                  <span className="flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    小桃
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    {new Date(post.createdAt).toLocaleDateString("zh-CN", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" />
+                    {Math.ceil(post.content.length / 300)} 分钟阅读
+                  </span>
+                </div>
+              </header>
+
+              {/* Cover Image */}
+              {post.coverImage && (
+                <div className="mb-10">
+                  <img
+                    src={post.coverImage}
+                    alt={post.title}
+                    className="w-full h-64 sm:h-80 object-cover rounded-2xl neo-border"
+                  />
+                </div>
+              )}
+
+              {/* Content */}
+              <MarkdownContent
+                content={post.content}
+                onHeadingsExtracted={handleHeadingsExtracted}
+                className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-blockquote:border-l-4 prose-blockquote:border-yellow-400 prose-blockquote:bg-yellow-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg"
+              />
+
+              {/* Footer */}
+              <div className="mt-12 pt-8 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">
+                    最后更新：
+                    {new Date(post.updatedAt).toLocaleDateString("zh-CN")}
+                  </span>
+                  <button
+                    onClick={() => navigate(-1)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black text-sm font-medium rounded-xl neo-border neo-shadow-sm hover:-translate-y-0.5 transition-all"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    返回列表
+                  </button>
+                </div>
+              </div>
+            </article>
+
+            <TableOfContents
+              items={tocItems}
+              activeId={activeId}
+              onItemClick={beginClickScroll}
+            />
           </div>
-        </article>
+        </div>
       </main>
       <Footer />
     </div>
