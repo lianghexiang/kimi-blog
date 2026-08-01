@@ -3,6 +3,10 @@ name: Deploy to Production
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -34,4 +38,4 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh deploy-target "bash -s" < scripts/deploy.sh
+          ssh deploy-target "DEPLOY_DIR=/root/kimi-blog bash -s" < scripts/deploy.sh

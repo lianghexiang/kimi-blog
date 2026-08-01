@@ -11,10 +11,10 @@ services:
       dockerfile: Dockerfile
       target: production
     ports:
-      - "8000:8000"
+      - "3030:3000"
     volumes:
       - ./backend:/app/backend:ro
     command: >
-      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 3000 --reload"
     environment:
-      PORT: 8000
+      PORT: 3000

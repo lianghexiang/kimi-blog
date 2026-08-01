@@ -101,8 +101,8 @@ All frontend commands are run from the `app/` directory.
 ```bash
 cd app
 
-# Development — Vite dev server on port 3000
-# /api requests are proxied to FastAPI on port 8000
+# Development — Vite dev server on port 3090
+# /api requests are proxied to FastAPI on port 3030
 npm run dev
 
 # Type check
@@ -331,7 +331,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 3000
 FastAPI production server:
 - Serves static files from `app/dist/public/` via `StaticFiles` mount.
 - Falls back to `index.html` for unknown non-API routes (SPA behavior).
-- Listens on port `3000` (or `$PORT`).
+- Listens on port `3000` inside the container (or `$PORT`).
+- Docker Compose publishes it to host port `3030`.
 
 ### Docker (Optional)
 
@@ -348,7 +349,7 @@ A multi-stage Dockerfile can be created:
 - **OAuth state** is base64-encoded redirect URI; consider adding a CSRF token if state needs stronger protection.
 - **Admin routes** are protected server-side by `require_admin` dependency; frontend only hides UI.
 - **Secrets**: `APP_SECRET` is used both as OAuth client secret and JWT signing key. Keep it private.
-- **CORS / Credentials**: Development CORS allows `http://localhost:3000` with `credentials: true`.
+- **CORS / Credentials**: Development CORS allows `http://localhost:3000` (Docker) and `http://localhost:3090` (Vite dev server) with `credentials: true`.
 
 ---
 

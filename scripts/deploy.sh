@@ -6,8 +6,8 @@ set -euo pipefail
 # 由 GitHub Actions 通过 SSH 调用
 # ═══════════════════════════════════════════════════════════════
 
-DEPLOY_DIR="${DEPLOY_DIR:-/opt/kimiblog}"
-HEALTH_URL="${HEALTH_URL:-http://localhost:3000/api/ping}"
+DEPLOY_DIR="${DEPLOY_DIR:-/root/kimi-blog}"
+HEALTH_URL="${HEALTH_URL:-http://localhost:3030/api/ping}"
 TIMEOUT="${TIMEOUT:-120}"
 
 echo "========================================"
@@ -24,15 +24,17 @@ cd "$DEPLOY_DIR" || {
 
 # ── 2. 拉取最新代码 ──
 echo "[2/5] Pulling latest code..."
-git fetch origin
-git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)
+git fetch origin main --prune
+git reset --hard origin/main
 echo "✅ Code updated"
 echo ""
 
 # ── 3. 读取环境变量 ──
 echo "[3/5] Loading environment variables..."
 if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs -d '\n')
+  set -a
+  . ./.env
+  set +a
   echo "✅ .env loaded"
 else
   echo "⚠️  .env not found, using docker-compose defaults"
@@ -42,7 +44,7 @@ echo ""
 # ── 4. 构建并重启服务 ──
 echo "[4/5] Building and restarting containers..."
 docker compose -f docker-compose.yml down
-docker compose -f docker-compose.yml up --build -d
+docker compose -f docker-compose.yml up --build -d --remove-orphans
 echo "✅ Containers started"
 echo ""
 
@@ -51,7 +53,7 @@ echo "[5/5] Health check..."
 echo "      Waiting for service to be ready (max ${TIMEOUT}s)..."
 
 for ((i=1; i<=TIMEOUT; i++)); do
-  if curl -sf "$HEALTH_URL" > /dev/null 2>&1; then
+  if curl -sf --max-time 5 "$HEALTH_URL" > /dev/null 2>&1; then
     echo "✅ Health check passed: $HEALTH_URL"
     echo ""
     echo "========================================"
