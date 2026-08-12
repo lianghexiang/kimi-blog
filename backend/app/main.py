@@ -35,7 +35,7 @@ app = FastAPI(lifespan=lifespan)
 from app.config import settings as app_settings
 
 def _get_cors_origins():
-    default = ["http://localhost:3000", "http://localhost:5000"]
+    default = ["http://localhost:3000", "http://localhost:3090"]
     if app_settings.cors_origins:
         return [o.strip() for o in app_settings.cors_origins.split(",") if o.strip()]
     return default

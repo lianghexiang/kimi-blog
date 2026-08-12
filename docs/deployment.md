@@ -10,16 +10,21 @@
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Nginx / CDN   │────▶│   kimiblog-app  │────▶│   kimiblog-db   │
 │  (可选反向代理)  │     │  FastAPI + SPA  │     │   MySQL 8.0     │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
         │                       │
         ▼                       ▼
-   80/443 端口             3000 端口
+   80/443 端口             3030 端口         ┌─────────────────┐
+                                            │  kimiblog-minio │
+                                            │  对象存储 (S3)   │
+                                            └─────────────────┘
+                                                9005/9006 端口
 ```
 
 | 容器 | 镜像 | 端口 | 说明 |
 |------|------|------|------|
-| `kimiblog-app` | 本地构建 | `3000` | FastAPI 后端 + React SPA 前端 |
+| `kimiblog-app` | 本地构建 | `3030`（宿主机）→ `3000`（容器内） | FastAPI 后端 + React SPA 前端 |
 | `kimiblog-db` | `mysql:8.0` | `3307` | 数据持久化存储 |
+| `kimiblog-minio` | `minio/minio` | `9005`（API）/ `9006`（控制台） | 图片对象存储 |
 
 ---
 
@@ -55,8 +60,7 @@ cd KimiBlog
 在项目根目录创建 `.env` 文件：
 
 ```bash
-cp backend/.env.example .env
-cp app/.env.example .env.frontend
+cp .env.example .env
 ```
 
 编辑 `.env`（根目录）：
@@ -80,6 +84,10 @@ KIMI_OPEN_URL=https://open.kimi.com
 # 管理员设置
 OWNER_UNION_ID=your-kimi-union-id
 
+# 默认管理员账号（首次启动自动创建）
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
+
 # ═══════════════════════════════════════════════════════════════
 # 前端构建参数（Docker build 时使用）
 # ═══════════════════════════════════════════════════════════════
@@ -93,6 +101,18 @@ MYSQL_ROOT_PASSWORD=kimiblog_root
 MYSQL_DATABASE=kimi_blog
 MYSQL_USER=kimiblog
 MYSQL_PASSWORD=kimiblog_pass
+
+# ═══════════════════════════════════════════════════════════════
+# MinIO 对象存储
+# ═══════════════════════════════════════════════════════════════
+# 容器网络内通过服务名 minio 访问，勿改成 IP
+MINIO_ENDPOINT=minio:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET=blog-uploads
+MINIO_SECURE=false
+# 公网访问 MinIO 的地址（图片 URL 前缀），如 http://服务器IP:9005
+MINIO_PUBLIC_URL=http://your-server-ip:9005
 
 # ═══════════════════════════════════════════════════════════════
 # 生产环境 CORS（可选，多域名用逗号分隔）
@@ -130,8 +150,8 @@ cd app && npm run dev
 ```
 
 开发模式下：
-- 后端 API：`http://localhost:8000`（Docker 内，代码挂载 + `--reload`）
-- 前端 dev server：`http://localhost:5000`（宿主机上 `npm run dev`）
+- 后端 API：`http://localhost:3030`（Docker 内，代码挂载 + `--reload`）
+- 前端 dev server：`http://localhost:3090`（宿主机上 `npm run dev`）
 - 数据库：`localhost:3307`
 
 首次启动时，`app` 容器会等待数据库健康检查通过后再启动。数据库表结构和默认数据会自动创建。
@@ -143,7 +163,7 @@ cd app && npm run dev
 docker compose ps
 
 # 测试 API
-curl http://localhost:3000/api/ping
+curl http://localhost:3030/api/ping
 # 期望输出: {"ok":true,"ts":...}
 
 # 查看默认管理员账号
@@ -151,7 +171,7 @@ docker compose logs app | grep "Created default admin user"
 # 默认: admin / admin123
 ```
 
-浏览器访问 `http://<服务器IP>:3000`。
+浏览器访问 `http://<服务器IP>:3030`。
 
 ---
 
@@ -251,7 +271,7 @@ server {
     client_max_body_size 20M;
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3030;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -298,14 +318,14 @@ Docker Compose 定义了两个命名卷：
 | 卷名 | 挂载点 | 说明 |
 |------|--------|------|
 | `db_data` | `/var/lib/mysql` | MySQL 数据文件 |
-| `uploads_data` | `/app/app/public/uploads` | 用户上传的图片 |
+| `minio_data` | `/data` | MinIO 对象存储数据（所有上传的图片） |
 
 **不要直接删除这两个卷**，否则数据会丢失。
 
 如需彻底清理并重新部署：
 
 ```bash
-# ⚠️ 警告：这会删除所有数据！
+# ⚠️ 警告：这会删除所有数据（数据库 + MinIO 图片）！
 docker compose down -v
 ```
 
@@ -318,9 +338,9 @@ docker compose down -v
 | `app` 容器不断重启 | `docker compose logs app` 查看报错；通常是数据库连接失败，检查 `DATABASE_URL` |
 | 数据库连接失败 | 确认 `db` 容器健康状态：`docker compose ps`；检查 `.env` 中的密码是否与 `docker-compose.yml` 一致 |
 | 前端页面空白 | 检查 `app/dist/public` 是否存在静态文件；确认构建阶段未报错 |
-| 图片上传失败 | 检查 `uploads_data` 卷权限；宿主机目录是否可写 |
+| 图片上传失败 | 检查 MinIO：`docker compose ps` 中 minio 是否 healthy；`MINIO_ACCESS_KEY`/`MINIO_SECRET_KEY`/`MINIO_BUCKET` 是否正确；`MINIO_PUBLIC_URL` 是否可访问 |
 | CORS 错误 | 配置 `CORS_ORIGINS` 为实际域名，重启 `app` 容器 |
-| 端口被占用 | `lsof -i :3000` 或 `lsof -i :3307` 找到占用进程并停止 |
+| 端口被占用 | `lsof -i :3030` 或 `lsof -i :3307` 找到占用进程并停止 |
 
 ---
 
@@ -330,8 +350,11 @@ docker compose down -v
 KimiBlog/
 ├── Dockerfile              # 多阶段构建文件
 ├── docker-compose.yml      # 服务编排
+├── docker-compose.override.yml  # 本地开发覆盖
 ├── .dockerignore           # 构建忽略规则
+├── .env.example            # 环境变量模板（复制为 .env 后填写）
 ├── .env                    # 环境变量（生产机密，不提交 Git）
+├── scripts/deploy.sh       # 自动化部署脚本（CI 调用）
 ├── app/                    # React 前端
 │   ├── src/
 │   ├── public/
@@ -355,9 +378,13 @@ docker build \
   --build-arg VITE_APP_ID=your-app-id \
   -t kimiblog:latest .
 
-# 2. 运行 MySQL
+# 2. 创建共享网络
+docker network create kimiblog-net
+
+# 3. 运行 MySQL
 docker run -d \
   --name kimiblog-db \
+  --network kimiblog-net \
   -e MYSQL_ROOT_PASSWORD=kimiblog_root \
   -e MYSQL_DATABASE=kimi_blog \
   -e MYSQL_USER=kimiblog \
@@ -365,14 +392,28 @@ docker run -d \
   -v kimiblog_db:/var/lib/mysql \
   mysql:8.0
 
-# 3. 运行应用
+# 4. 运行 MinIO（对象存储）
+docker run -d \
+  --name kimiblog-minio \
+  --network kimiblog-net \
+  -e MINIO_ROOT_USER=minioadmin \
+  -e MINIO_ROOT_PASSWORD=minioadmin \
+  -v kimiblog_minio:/data \
+  -p 9005:9000 -p 9006:9001 \
+  minio/minio server /data --address :9000 --console-address :9001
+
+# 5. 运行应用（宿主机 3030 → 容器内 3000）
 docker run -d \
   --name kimiblog-app \
-  --link kimiblog-db:db \
+  --network kimiblog-net \
   -e APP_SECRET=your-secret \
   -e DATABASE_URL=mysql://kimiblog:kimiblog_pass@db:3306/kimi_blog \
   -e APP_ID=your-app-id \
-  -p 3000:3000 \
-  -v kimiblog_uploads:/app/app/public/uploads \
+  -e MINIO_ENDPOINT=minio:9000 \
+  -e MINIO_ACCESS_KEY=minioadmin \
+  -e MINIO_SECRET_KEY=minioadmin \
+  -e MINIO_BUCKET=blog-uploads \
+  -e MINIO_SECURE=false \
+  -p 3030:3000 \
   kimiblog:latest
 ```

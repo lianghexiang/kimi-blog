@@ -24,7 +24,11 @@ FROM docker.m.daocloud.io/library/python:3.12-slim AS production
 WORKDIR /app
 
 # Install build tools (for bcrypt wheel compilation fallback)
-RUN apt-get update \
+# Use Aliyun apt mirror for faster access from China servers
+# deb822 format (trixie+) lives in debian.sources; legacy format in sources.list
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g; s|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true \
+    && sed -i 's|deb.debian.org|mirrors.aliyun.com|g; s|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list 2>/dev/null || true \
+    && apt-get update \
     && apt-get install -y --no-install-recommends gcc \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,15 +43,12 @@ COPY backend/ ./backend/
 # Copy built frontend static files
 COPY --from=frontend-build /build/dist/public ./app/dist/public
 
-# Copy frontend uploads directory (for image uploads persistence mount point)
-RUN mkdir -p /app/app/public/uploads
-
 # Working directory for uvicorn imports
 WORKDIR /app/backend
 
 ENV PYTHONPATH=/app/backend
 ENV PORT=3000
 
-EXPOSE 5000
+EXPOSE 3000
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
