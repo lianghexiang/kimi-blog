@@ -71,6 +71,13 @@
       overflow-y: auto;
       scrollbar-gutter: stable;
     }
+
+    /* html 已通过 scrollbar-gutter 常驻保留滚动条空间，而 Radix 弹层（Select/Dialog 等）
+       打开时会在 body 上追加 margin-right 补偿"被隐藏的滚动条"，
+       保留 + 补偿叠加导致页面水平抖动；此处用更高特异性抵消 Radix 的补偿 */
+    html body[data-scroll-locked] {
+      margin-right: 0 !important;
+    }
   }
 }
 
