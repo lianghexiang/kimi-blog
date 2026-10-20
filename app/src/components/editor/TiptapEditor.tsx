@@ -6,7 +6,6 @@ import { useTiptapEditor } from "./hooks/useTiptapEditor";
 import EditorContent from "./EditorContent";
 import EditorToolbar from "./EditorToolbar";
 import EditorBubbleMenu from "./EditorBubbleMenu";
-import EditorFloatingMenu from "./EditorFloatingMenu";
 
 interface TiptapEditorProps {
   value: string;
@@ -70,7 +69,6 @@ function TiptapEditor({ value, onChange }: TiptapEditorProps) {
           <EditorToolbar editor={editor} />
           <div className="relative p-3">
             <EditorBubbleMenu editor={editor} />
-            <EditorFloatingMenu editor={editor} />
             <EditorContent editor={editor} />
           </div>
         </>
