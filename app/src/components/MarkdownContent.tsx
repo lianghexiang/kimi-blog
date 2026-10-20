@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef, useLayoutEffect, type ReactNode } from "react";
+import { useState, useCallback, useRef, useLayoutEffect, useEffect, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSlug from "rehype-slug";
-import { ZoomIn, Link2 } from "lucide-react";
+import { ZoomIn, Link2, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ImageLightbox from "./ImageLightbox";
 
@@ -104,6 +104,7 @@ export default function MarkdownContent({
                 </span>
               </span>
             ),
+            pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
             table: ({ children }) => (
               <div className="overflow-x-auto my-6 rounded-xl border-2 border-black neo-shadow-sm">
                 <table className="min-w-full border-collapse bg-white text-sm">
@@ -158,6 +159,64 @@ interface HeadingProps {
   id?: string;
   level: number;
   children?: ReactNode;
+}
+
+// 代码块：右上角悬浮复制按钮，点击后短暂显示"已复制"反馈
+function CodeBlock({ children }: { children?: ReactNode }) {
+  const preRef = useRef<HTMLPreElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const handleCopy = useCallback(async () => {
+    const text = preRef.current?.textContent ?? "";
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // clipboard API 在非 HTTPS 环境不可用，降级用 execCommand
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setCopied(false), 2000);
+  }, []);
+
+  return (
+    <div className="group/code relative my-6">
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label="复制代码"
+        className={cn(
+          "absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-lg border-2 border-black px-2.5 py-1 text-xs font-medium",
+          "opacity-0 group-hover/code:opacity-100 transition-opacity",
+          copied
+            ? "bg-yellow-300 text-gray-900 neo-shadow-sm"
+            : "bg-white/90 text-gray-700 backdrop-blur-sm hover:bg-yellow-50 hover:text-gray-900"
+        )}
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+        {copied ? "已复制" : "复制"}
+      </button>
+      <pre ref={preRef}>{children}</pre>
+    </div>
+  );
 }
 
 function Heading({ id, level, children }: HeadingProps) {
