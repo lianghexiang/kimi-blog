@@ -6,8 +6,11 @@ export function useActiveHeading(ids: string[]) {
   const clickScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  // 记录每个标题当前是否在观察区内；点击滚动期间也持续更新，结束后据此恢复高亮
+  const visibleRef = useRef(new Map<string, boolean>());
+  const idsRef = useRef(ids);
 
-  // 点击目录时临时禁用 observer，避免 smooth scroll 过程中高亮闪烁
+  // 点击目录时临时不切换高亮，避免 smooth scroll 过程中高亮闪烁
   const beginClickScroll = useCallback((id: string) => {
     isClickScrollingRef.current = true;
     setActiveId(id);
@@ -16,27 +19,36 @@ export function useActiveHeading(ids: string[]) {
     }
     clickScrollTimerRef.current = setTimeout(() => {
       isClickScrollingRef.current = false;
+      // 滚动结束后按最新可见状态恢复高亮，否则会一直停留在点击的章节
+      const firstVisible = idsRef.current.find(hid =>
+        visibleRef.current.get(hid)
+      );
+      if (firstVisible) {
+        setActiveId(firstVisible);
+      }
     }, 1000);
   }, []);
 
   useEffect(() => {
+    idsRef.current = ids;
     if (ids.length === 0) {
       setActiveId(null);
       return;
     }
 
-    const visible = new Map<string, boolean>();
+    visibleRef.current = new Map();
 
     const observer = new IntersectionObserver(
       entries => {
-        if (isClickScrollingRef.current) return;
-
+        // 滚动期间始终记录可见性；点击滚动时仅跳过高亮切换
         entries.forEach(entry => {
-          visible.set(entry.target.id, entry.isIntersecting);
+          visibleRef.current.set(entry.target.id, entry.isIntersecting);
         });
 
+        if (isClickScrollingRef.current) return;
+
         // 找到文档顺序中第一个可见的标题
-        const firstVisible = ids.find(id => visible.get(id));
+        const firstVisible = ids.find(id => visibleRef.current.get(id));
         if (firstVisible) {
           setActiveId(firstVisible);
         }
@@ -51,7 +63,7 @@ export function useActiveHeading(ids: string[]) {
       const el = document.getElementById(id);
       if (el) {
         observer.observe(el);
-        visible.set(id, false);
+        visibleRef.current.set(id, false);
       }
     });
 
@@ -60,6 +72,7 @@ export function useActiveHeading(ids: string[]) {
       if (clickScrollTimerRef.current) {
         clearTimeout(clickScrollTimerRef.current);
       }
+      isClickScrollingRef.current = false;
     };
   }, [ids]);
 
